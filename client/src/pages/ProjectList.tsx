@@ -1,34 +1,25 @@
-import Header from "../layouts/Header";
-import Footer from "../layouts/Footer";
-import styles from "../components/Table.module.css";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import Header from "../layouts/Header"
+import Footer from "../layouts/Footer"
+import styles from "../components/Table.module.css"
+import { useState } from "react"
+import { Link } from "react-router-dom"
 
-type Project = {
-  id: number;
-  name: string;
-};
-
-const mockProjects: Project[] = [
-  { id: 1, name: "Xây dựng website thương mại điện tử" },
-  { id: 2, name: "Phát triển ứng dụng di động" },
-  { id: 3, name: "Quản lý dữ liệu khách hàng" },
-  { id: 4, name: "Nâng cấp hệ thống bán hàng" },
-  { id: 5, name: "Xây dựng ứng dụng học trực tuyến" },
-];
+// 👇 Import từ mock và interface
+import { mockProjects } from "../mock/projects"
+import type { Project } from "../interfaces/Project.interface"
 
 const ProjectList = () => {
-  const [search, setSearch] = useState("");
-  const filtered = mockProjects.filter((p) =>
+  const [search, setSearch] = useState("")
+  const filtered = mockProjects.filter((p: Project) =>
     p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  )
 
   return (
     <div
       style={{
         background: "#F8FAFC",
         minHeight: "100vh",
-        fontFamily: "Poppins",
+        fontFamily: "Poppins"
       }}
     >
       <Header />
@@ -39,15 +30,16 @@ const ProjectList = () => {
             background: "white",
             borderRadius: 12,
             boxShadow: "0 4px 8px rgba(0,0,0,0.05)",
-            padding: "24px",
+            padding: "24px"
           }}
         >
+          {/* Tiêu đề + nút thêm dự án */}
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 20,
+              marginBottom: 20
             }}
           >
             <h2 style={{ fontSize: 18, fontWeight: 600 }}>
@@ -61,13 +53,14 @@ const ProjectList = () => {
                 borderRadius: 8,
                 padding: "8px 16px",
                 fontWeight: 500,
-                cursor: "pointer",
+                cursor: "pointer"
               }}
             >
               + Thêm Dự Án
             </button>
           </div>
 
+          {/* Ô tìm kiếm */}
           <div style={{ textAlign: "right", marginBottom: 16 }}>
             <input
               type="text"
@@ -78,11 +71,12 @@ const ProjectList = () => {
                 border: "1px solid #d1d5db",
                 borderRadius: 8,
                 padding: "8px 12px",
-                outline: "none",
+                outline: "none"
               }}
             />
           </div>
 
+          {/* Bảng dữ liệu */}
           <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
@@ -119,6 +113,7 @@ const ProjectList = () => {
             </table>
           </div>
 
+          {/* Phân trang */}
           <div style={{ textAlign: "center", marginTop: 16 }}>
             <button
               style={{
@@ -128,7 +123,7 @@ const ProjectList = () => {
                 borderRadius: 6,
                 padding: "6px 12px",
                 marginRight: 4,
-                cursor: "pointer",
+                cursor: "pointer"
               }}
             >
               1
@@ -139,7 +134,7 @@ const ProjectList = () => {
                 borderRadius: 6,
                 padding: "6px 12px",
                 background: "white",
-                cursor: "pointer",
+                cursor: "pointer"
               }}
             >
               2
@@ -150,7 +145,7 @@ const ProjectList = () => {
                 borderRadius: 6,
                 padding: "6px 12px",
                 background: "white",
-                cursor: "pointer",
+                cursor: "pointer"
               }}
             >
               3
@@ -161,7 +156,7 @@ const ProjectList = () => {
 
       <Footer />
     </div>
-  );
-};
+  )
+}
 
-export default ProjectList;
+export default ProjectList

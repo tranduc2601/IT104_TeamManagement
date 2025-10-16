@@ -1,17 +1,17 @@
 type InputFieldProps = {
-  label?: string
-  type?: string
-  name: string
-  placeholder?: string
-  required?: boolean
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
-  value?: string
-  error?: string
-}
+  label?: string;
+  type?: string;
+  name: string;
+  placeholder?: string;
+  required?: boolean;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  value?: string;
+  error?: string;
+};
 
 const InputField = ({
   label,
-  type = 'text',
+  type = "text",
   name,
   placeholder,
   required,
@@ -22,7 +22,10 @@ const InputField = ({
   return (
     <div className="flex flex-col">
       {label && (
-        <label htmlFor={name} className="mb-1 text-sm font-medium text-gray-700">
+        <label
+          htmlFor={name}
+          className="mb-1 text-sm font-medium text-gray-700"
+        >
           {label}
         </label>
       )}
@@ -38,7 +41,7 @@ const InputField = ({
       />
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
-  )
-}
+  );
+};
 
-export default InputField
+export default InputField;
