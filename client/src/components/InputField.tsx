@@ -20,12 +20,9 @@ const InputField = ({
   error,
 }: InputFieldProps) => {
   return (
-    <div className="flex flex-col">
+    <div className="form-group">
       {label && (
-        <label
-          htmlFor={name}
-          className="mb-1 text-sm font-medium text-gray-700"
-        >
+        <label htmlFor={name} className="form-label">
           {label}
         </label>
       )}
@@ -37,9 +34,9 @@ const InputField = ({
         required={required}
         onChange={onChange}
         value={value}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0D6EFD]"
+        className="form-input"
       />
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="error-message">{error}</p>}
     </div>
   );
 };

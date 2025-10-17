@@ -1,82 +1,86 @@
-import Header from "../layouts/Header"
-import Footer from "../layouts/Footer"
-import styles from "../components/Table.module.css"
-import { useState } from "react"
-import { Link } from "react-router-dom"
-
-// 👇 Import từ mock và interface
-import { mockProjects } from "../mock/projects"
-import type { Project } from "../interfaces/Project.interface"
+import Header from "../layouts/Header";
+import Footer from "../layouts/Footer";
+import styles from "../components/Table.module.css";
+import layoutStyles from "../styles/ProjectList.module.css";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { mockProjects } from "../mock/projects";
+import type { Project } from "../interfaces/Project.interface";
+import Pagination from "../components/Pagination";
+import ProjectModal from "../components/ProjectModal";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 const ProjectList = () => {
-  const [search, setSearch] = useState("")
-  const filtered = mockProjects.filter((p: Project) =>
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isDeleteOpen, setDeleteOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [projects, setProjects] = useState(mockProjects);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const itemsPerPage = 5;
+  const filtered = projects.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
-  )
+  );
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginated = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleSave = (name: string) => {
+    if (editingProject) {
+      setProjects((prev) =>
+        prev.map((p) => (p.id === editingProject.id ? { ...p, name } : p))
+      );
+    } else {
+      const newId = Math.max(...projects.map((p) => p.id)) + 1;
+      setProjects([...projects, { id: newId, name }]);
+    }
+    setModalOpen(false);
+  };
+
+  const handleDelete = () => {
+    if (selectedId !== null) {
+      setProjects((prev) => prev.filter((p) => p.id !== selectedId));
+      setDeleteOpen(false);
+    }
+  };
 
   return (
-    <div
-      style={{
-        background: "#F8FAFC",
-        minHeight: "100vh",
-        fontFamily: "Poppins"
-      }}
-    >
+    <div className={layoutStyles.pageWrapper}>
       <Header />
 
-      <main style={{ padding: "40px 80px" }}>
-        <div
-          style={{
-            background: "white",
-            borderRadius: 12,
-            boxShadow: "0 4px 8px rgba(0,0,0,0.05)",
-            padding: "24px"
-          }}
-        >
-          {/* Tiêu đề + nút thêm dự án */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 20
-            }}
-          >
-            <h2 style={{ fontSize: 18, fontWeight: 600 }}>
-              Quản Lý Dự Án Nhóm
-            </h2>
+      <main className={layoutStyles.mainSection}>
+        <div className={layoutStyles.card}>
+          <div className={layoutStyles.headerRow}>
+            <h2 className={layoutStyles.title}>Quản Lý Dự Án Nhóm</h2>
             <button
-              style={{
-                background: "#0D6EFD",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                padding: "8px 16px",
-                fontWeight: 500,
-                cursor: "pointer"
+              className={layoutStyles.addButton}
+              onClick={() => {
+                setEditingProject(null);
+                setModalOpen(true);
               }}
             >
               + Thêm Dự Án
             </button>
           </div>
 
-          {/* Ô tìm kiếm */}
-          <div style={{ textAlign: "right", marginBottom: 16 }}>
+          <div className={layoutStyles.searchBox}>
             <input
               type="text"
               placeholder="Tìm kiếm dự án"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                border: "1px solid #d1d5db",
-                borderRadius: 8,
-                padding: "8px 12px",
-                outline: "none"
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
               }}
+              className={layoutStyles.searchInput}
             />
           </div>
 
-          {/* Bảng dữ liệu */}
           <div className={styles.tableContainer}>
             <table className={styles.table}>
               <thead>
@@ -87,16 +91,28 @@ const ProjectList = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p) => (
+                {paginated.map((p) => (
                   <tr key={p.id}>
                     <td>{p.id}</td>
                     <td>{p.name}</td>
                     <td>
                       <div className={styles.actions}>
-                        <button className={`${styles.btn} ${styles.edit}`}>
+                        <button
+                          className={`${styles.btn} ${styles.edit}`}
+                          onClick={() => {
+                            setEditingProject(p);
+                            setModalOpen(true);
+                          }}
+                        >
                           Sửa
                         </button>
-                        <button className={`${styles.btn} ${styles.delete}`}>
+                        <button
+                          className={`${styles.btn} ${styles.delete}`}
+                          onClick={() => {
+                            setSelectedId(p.id);
+                            setDeleteOpen(true);
+                          }}
+                        >
                           Xóa
                         </button>
                         <Link
@@ -113,50 +129,30 @@ const ProjectList = () => {
             </table>
           </div>
 
-          {/* Phân trang */}
-          <div style={{ textAlign: "center", marginTop: 16 }}>
-            <button
-              style={{
-                background: "#0D6EFD",
-                color: "white",
-                border: "none",
-                borderRadius: 6,
-                padding: "6px 12px",
-                marginRight: 4,
-                cursor: "pointer"
-              }}
-            >
-              1
-            </button>
-            <button
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: 6,
-                padding: "6px 12px",
-                background: "white",
-                cursor: "pointer"
-              }}
-            >
-              2
-            </button>
-            <button
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: 6,
-                padding: "6px 12px",
-                background: "white",
-                cursor: "pointer"
-              }}
-            >
-              3
-            </button>
-          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </main>
 
       <Footer />
-    </div>
-  )
-}
 
-export default ProjectList
+      <ProjectModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSave}
+        defaultValue={editingProject?.name}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={isDeleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDelete}
+      />
+    </div>
+  );
+};
+
+export default ProjectList;
