@@ -1,71 +1,570 @@
-.project-detail-page {
-  min-width: 1920px;
-  height: 962px;
-  background: white;
-  color: black;
-  padding: 16px 8px 16px 8px;
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  font-family: "Roboto", sans-serif;
+/* ProjectDetail.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Header */
-.project-header {
+/* Page Layout */
+.project-detail-page {
+  min-height: 100vh;
+  background: #f9fafb;
+  font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Navbar */
+.top-navbar {
+  background-color: #2d3748;
+  color: white;
+  padding: 14px 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
 }
 
-.project-title {
-  font-family: Roboto, sans-serif;
+.navbar-title {
+  margin: 0;
+  font-size: 18px;
   font-weight: 500;
-  font-size: 23.54px;
-  line-height: 28.8px;
 }
 
-/* Phần thông tin dự án */
-.project-info {
+.navbar-links {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.nav-link:hover {
+  opacity: 0.8;
+}
+
+.nav-link-bold {
+  font-weight: 600;
+}
+
+/* Page Container */
+.page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  flex: 1;
+  width: 100%;
+}
+
+.main-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.content-wrapper {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.left-column {
+  flex: 1;
+  min-width: 0;
+}
+
+.right-column {
+  width: 320px;
+  flex-shrink: 0;
+  /* will be absolutely positioned inside .main-card */
+}
+
+/* Members card sits at top-right inside the main card */
+.main-card .members-card {
+  position: absolute;
+  right: 32px;
+  top: 32px;
+  width: 300px;
+}
+
+/* Ensure the main card is positioned relative for absolute children */
+.main-card { position: relative; }
+
+/* Give left column padding so content doesn't flow beneath absolute members-card */
+.main-card .left-column { padding-right: 340px; }
+
+/* Header card: project info left + members right */
+.header-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.header-members {
+  width: 386px;
+  height: 275px;
+  flex-shrink: 0;
+}
+
+/* Left project info card fixed size */
+.header-card .project-info-card {
+  width: 648px;
+  height: 275px;
+  box-sizing: border-box;
+}
+
+/* Position the members card absolutely within header wrapper at left: 910px */
+.header-card .header-members {
+  position: absolute;
+  left: 910px;
+  top: 0;
+}
+
+/* Ensure header-card has enough height for absolute children */
+.header-card { min-height: 275px; }
+
+/* Tasks container below header */
+.tasks-container {
+  margin-top: 12px;
+}
+
+/* Project Title */
+.project-main-title {
+  font-size: 24px;
+  font-weight: 500;
+  color: #1a202c;
+  margin: 0 0 20px 0;
+}
+
+/* Project Info Card */
+.project-info-card {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   gap: 20px;
   align-items: flex-start;
-  margin-bottom: 24px;
 }
 
-.project-thumb {
-  width: 200px;
-  height: 160px;
+.project-thumbnail {
+  width: 176px;
+  height: 144px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.thumbnail-image {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-radius: 8px;
 }
 
 .project-meta {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.meta-title {
-  font-size: 20px;
+.project-description {
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.btn-add-task {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.2s;
+}
+
+.btn-add-task:hover {
+  background-color: #1d4ed8;
+}
+
+/* Task Controls */
+.task-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sort-select {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  color: #374151;
+  outline: none;
+}
+
+.sort-select:focus {
+  border-color: #2563eb;
+}
+
+.search-input {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  width: 240px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #2563eb;
+}
+
+/* Task Card */
+.task-card {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.task-card-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
   font-weight: 600;
+  color: #1a202c;
+}
+
+/* Task Table Header */
+.task-table-header {
+  display: grid;
+  grid-template-columns: 60px 2fr 1.2fr 0.8fr 1fr 1fr 0.9fr 140px;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #374151;
+}
+
+.th-actions {
+  text-align: center;
+}
+
+/* Task Section */
+.task-section {
   margin-bottom: 8px;
 }
 
-.meta-desc {
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
   font-size: 14px;
-  color: #4b5563;
+  font-weight: 600;
+  color: #1a202c;
+  user-select: none;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
-/* Thanh công cụ nhiệm vụ */
-.task-toolbar {
+.section-header:hover {
+  background-color: #f9fafb;
+}
+
+.section-toggle {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+.section-title {
+  color: #1a202c;
+}
+
+/* Task Row */
+.task-row {
+  display: grid;
+  grid-template-columns: 60px 2fr 1.2fr 0.8fr 1fr 1fr 0.9fr 140px;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+  font-size: 14px;
+  color: #374151;
+  transition: background-color 0.2s;
+}
+
+.task-row:hover {
+  background-color: #f9fafb;
+}
+
+.task-row:last-child {
+  border-bottom: none;
+}
+
+.task-date {
+  color: #2563eb;
+}
+
+/* Badges */
+.badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 11px;
+  display: inline-block;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.badge-low {
+  background-color: #06b6d4;
+}
+
+.badge-medium {
+  background-color: #fb923c;
+}
+
+.badge-high {
+  background-color: #ef4444;
+}
+
+.badge-success {
+  background-color: #22c55e;
+}
+
+.badge-warning {
+  background-color: #fb923c;
+}
+
+.badge-danger {
+  background-color: #ef4444;
+}
+
+/* Action Buttons */
+.td-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.btn-action {
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.btn-action:hover {
+  opacity: 0.9;
+}
+
+.btn-edit {
+  background-color: #fbbf24;
+  color: white;
+}
+
+.btn-delete {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Members Card */
+.members-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.members-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
 
-.search-input {
+.members-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.btn-add-member {
   padding: 6px 12px;
+  border-radius: 4px;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  color: #374151;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-add-member:hover {
+  background: #f3f4f6;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.member-item:hover {
+  background: #f9fafb;
+}
+
+.member-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
   font-size: 14px;
-  outline: none;
-  width: 240px;
+  flex-shrink: 0;
+}
+
+.member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #1a202c;
+}
+
+.member-role {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.member-menu {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  line-height: 1;
+}
+
+.member-menu:hover {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+/* Footer */
+.page-footer {
+  background-color: #2d3748;
+  color: white;
+  text-align: center;
+  padding: 16px;
+  font-size: 14px;
+  margin-top: auto;
+}
+
+.page-footer p {
+  margin: 0;
+  color: #cbd5e0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .content-wrapper {
+    flex-direction: column;
+  }
+
+  .main-card .members-card {
+    position: static;
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .main-card .left-column { padding-right: 0; }
+
+  .task-table-header,
+  .task-row {
+    grid-template-columns: 40px 1.5fr 1fr 0.7fr 0.9fr 0.9fr 0.8fr 120px;
+    gap: 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 16px 12px;
+  }
+
+  .project-info-card {
+    flex-direction: column;
+  }
+
+  .project-thumbnail {
+    width: 100%;
+    height: 200px;
+  }
+
+  .task-controls {
+    flex-direction: column;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .task-table-header,
+  .task-row {
+    font-size: 11px;
+    padding: 8px 12px;
+  }
 }

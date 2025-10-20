@@ -1,216 +1,351 @@
-
-import { useState } from "react";
-import TaskTable from "../components/TaskModal";
-import AddOrEditTaskModal from "../components/modals/Add_EditTaskModal";
-import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import React, { useState } from "react";
+import Header from "../layouts/Header";
+import Footer from "../layouts/Footer";
+import AddEditTaskModal from "../components/modals/Add_EditTaskModal";
 import AddMemberModal from "../components/modals/AddMemberModal";
+import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
 import MemberDetailModal from "../components/modals/MemberDetailModal";
+import type { Task, Member } from "../interfaces/project";
+import { initialTasks, members } from "../mock/projectData";
 import "../styles/ProjectDetail.css";
 
-import type { Task, TaskStatus } from "../interfaces/Task.interface";
-import { mockTasks as initialTasks } from "../mock/mockTask";
-
-export default function ProjectDetail() {
-  // State quản lý nhiệm vụ và modal
+const ProjectDetail: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "assignee" | "startDate">("name");
-  const [showAddTask, setShowAddTask] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<Member[]>(members);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
+    "To do": true,
+    "In Progress": true,
+    Pending: false,
+    Done: false,
+  });
+
+  // Modal states
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showMemberDetailModal, setShowMemberDetailModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
-  const [showEditTask, setShowEditTask] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
-  const [showAddMember, setShowAddMember] = useState(false);
-  const [showMemberDetail, setShowMemberDetail] = useState(false);
 
-  // Dữ liệu giả lập
-  const mockMember = {
-    name: "Nguyễn Văn A",
-    email: "vana@example.com",
-    role: "Frontend Developer",
-    joinDate: "12/08/2025",
+  const toggleSection = (status: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [status]: !prev[status],
+    }));
   };
 
-  // Xử lý thêm nhiệm vụ
-  const handleAddTask = (data: { name: string; assignee: string; status: string }) => {
-    const newTask: Task = {
-      id: tasks.length + 1,
-      name: data.name,
-      assignee: data.assignee,
-      startDate: new Date().toISOString().slice(0, 10),
-      endDate: "",
-      progress: "Chưa cập nhật",
-      priority: "Trung bình",
-      status: data.status as TaskStatus,
-    };
-    setTasks([...tasks, newTask]);
-    setShowAddTask(false);
+  const getPriorityBadgeClass = (priority: string) => {
+    if (priority === "Thấp") return "badge-low";
+    if (priority === "Trung Bình") return "badge-medium";
+    if (priority === "Cao") return "badge-high";
+    return "";
   };
 
-  // Xử lý xoá nhiệm vụ
-  const handleDeleteTask = () => {
+  const getProgressBadgeClass = (progress: string) => {
+    if (progress === "Đúng tiến độ") return "badge-success";
+    if (progress === "Trễ hạn") return "badge-danger";
+    if (progress === "Có rủi ro") return "badge-warning";
+    return "";
+  };
+
+  const handleAddTask = () => {
+    setSelectedTask(null);
+    setShowTaskModal(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task);
+    setShowTaskModal(true);
+  };
+
+  const handleDeleteTask = (task: Task) => {
+    setTaskToDelete(task);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
     if (taskToDelete) {
       setTasks(tasks.filter((t) => t.id !== taskToDelete.id));
-      setShowConfirmDelete(false);
       setTaskToDelete(null);
     }
+    setShowDeleteModal(false);
   };
 
-  // Xử lý tìm kiếm
-  const filteredTasks = tasks.filter(
-    (t) =>
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.assignee.toLowerCase().includes(search.toLowerCase())
-  );
+  // Accepts the modal shape: { name, assignee, status } where status is 'todo'|'inprogress'|...
+  const handleSaveTask = (taskData: { name: string; assignee: string; status: string }) => {
+    const statusMap: Record<string, Task['status']> = {
+      todo: 'To do',
+      inprogress: 'In Progress',
+      pending: 'Pending',
+      done: 'Done',
+    };
 
-  // Xử lý sắp xếp
-  const sortedTasks = [...filteredTasks].sort((a, b) => {
-    if (sortBy === "name") return a.name.localeCompare(b.name);
-    if (sortBy === "assignee") return a.assignee.localeCompare(b.assignee);
-    if (sortBy === "startDate") return a.startDate.localeCompare(b.startDate);
-    return 0;
-  });
+    if (selectedTask) {
+      // Edit existing task
+      setTasks(
+        tasks.map((t) =>
+          t.id === selectedTask.id
+            ? { ...t, name: taskData.name, assignee: taskData.assignee, status: statusMap[taskData.status] }
+            : t
+        )
+      );
+    } else {
+      // Add new task
+      const newTask: Task = {
+        id: tasks.length ? Math.max(...tasks.map((t) => t.id)) + 1 : 1,
+        name: taskData.name,
+        assignee: taskData.assignee,
+        priority: 'Trung Bình',
+        startDate: new Date().toISOString().slice(5).replace('-', ' - '),
+        endDate: '',
+        progress: 'Chưa cập nhật' as Task['progress'],
+        status: statusMap[taskData.status],
+      };
+      setTasks([...tasks, newTask]);
+    }
+    setShowTaskModal(false);
+  };
+
+  const handleMemberClick = (member: Member) => {
+    setSelectedMember(member);
+    setShowMemberDetailModal(true);
+  };
+
+  const groupedTasks = tasks.reduce((acc: Record<string, Task[]>, task) => {
+    if (!acc[task.status]) acc[task.status] = [];
+    acc[task.status].push(task);
+    return acc;
+  }, {});
+
+  const statuses = ["To do", "In Progress", "Pending", "Done"];
 
   return (
     <div className="project-detail-page">
-      {/* Header */}
-      <header className="project-header">
-        <h1 className="project-title">Chi tiết Dự Án</h1>
-        <button
-          style={{
-            width: 132,
-            height: 31,
-            borderRadius: 4,
-            border: "1px solid rgba(108, 117, 125, 1)",
-            background: "black",
-            color: "white",
-            fontWeight: 500,
-            fontSize: 16,
-          }}
-          onClick={() => setShowAddMember(true)}
-        >
-          + Thêm thành viên
-        </button>
-      </header>
+      <Header />
 
-      {/* Thông tin dự án */}
-      <section className="project-info">
-        <img
-          src="/images/project-thumb.png"
-          alt="project thumbnail"
-          className="project-thumb"
-        />
-        <div className="project-meta">
-          <h2 className="meta-title">Website thương mại điện tử</h2>
-          <p className="meta-desc">
-            Dự án phát triển hệ thống bán hàng trực tuyến với quản lý sản phẩm,
-            đơn hàng, và thanh toán tích hợp.
-          </p>
+      {/* Main Content */}
+      <div className="page-container">
+        <div className="main-card">
+          <div className="header-card">
+            {/* Project Info on the left */}
+            <div className="project-info-card">
+              <div className="project-thumbnail">
+                <img
+                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop"
+                  alt="project"
+                  className="thumbnail-image"
+                />
+              </div>
+              <div className="project-meta">
+                <h2 className="project-main-title">Xây dựng website thương mại điện tử</h2>
+                <p className="project-description">
+                  Dự án nhằm phát triển một nền tảng thương mại điện tử với các
+                  tính năng như giỏ hàng, thanh toán và quản lý sản phẩm.
+                </p>
+                <button className="btn-add-task" onClick={handleAddTask}>
+                  + Thêm nhiệm vụ
+                </button>
+              </div>
+            </div>
+
+            {/* Members on the right */}
+            <div className="members-card header-members">
+              <div className="members-header">
+                <h3 className="members-title">Thành viên</h3>
+                <button
+                  className="btn-add-member"
+                  onClick={() => setShowMemberModal(true)}
+                >
+                  + Thêm thành viên
+                </button>
+              </div>
+
+              <div className="members-list">
+                {teamMembers.map((member) => (
+                  <div key={member.id} className="member-item">
+                    <div
+                      className="member-avatar"
+                      style={{ backgroundColor: member.color }}
+                    >
+                      {member.initials}
+                    </div>
+                    <div className="member-info">
+                      <div className="member-name">{member.name}</div>
+                      <div className="member-role">{member.role}</div>
+                    </div>
+                    <button
+                      className="member-menu"
+                      onClick={() => handleMemberClick(member)}
+                    >
+                      ⋮
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Tasks area below header */}
+          <div className="tasks-container">
+            <div className="task-controls">
+              <select className="sort-select">
+                <option>Sắp xếp theo</option>
+                <option>Tên nhiệm vụ</option>
+                <option>Người phụ trách</option>
+                <option>Ngày bắt đầu</option>
+              </select>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Tìm kiếm nhiệm vụ"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="task-card">
+              <h3 className="task-card-title">Danh Sách Nhiệm Vụ</h3>
+
+              <div className="task-table-header">
+                <div></div>
+                <div>Tên Nhiệm Vụ</div>
+                <div>Người Phụ Trách</div>
+                <div>Ưu Tiên</div>
+                <div>Ngày Bắt Đầu</div>
+                <div>Hạn Chót</div>
+                <div>Tiến độ</div>
+                <div className="th-actions">Hành động</div>
+              </div>
+
+              {statuses.map((status) => {
+                const statusTasks = groupedTasks[status] || [];
+                const isExpanded = expandedSections[status];
+
+                return (
+                  <div key={status} className="task-section">
+                    <div
+                      onClick={() => toggleSection(status)}
+                      className="section-header"
+                    >
+                      <span className="section-toggle">
+                        {isExpanded ? "▼" : "▶"}
+                      </span>
+                      <span className="section-title">{status}</span>
+                    </div>
+
+                    {isExpanded &&
+                      statusTasks.map((task) => (
+                        <div key={task.id} className="task-row">
+                          <div></div>
+                          <div>{task.name}</div>
+                          <div>{task.assignee}</div>
+                          <div>
+                            <span
+                              className={`badge ${getPriorityBadgeClass(
+                                task.priority
+                              )}`}
+                            >
+                              {task.priority}
+                            </span>
+                          </div>
+                          <div className="task-date">{task.startDate}</div>
+                          <div className="task-date">{task.endDate}</div>
+                          <div>
+                            <span
+                              className={`badge ${getProgressBadgeClass(
+                                task.progress
+                              )}`}
+                            >
+                              {task.progress}
+                            </span>
+                          </div>
+                          <div className="td-actions">
+                            <button
+                              className="btn-action btn-edit"
+                              onClick={() => handleEditTask(task)}
+                            >
+                              Sửa
+                            </button>
+                            <button
+                              className="btn-action btn-delete"
+                              onClick={() => handleDeleteTask(task)}
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      </section>
-
-      {/* Thanh điều khiển nhiệm vụ */}
-      <div className="task-toolbar">
-        <button
-          style={{
-            width: 155,
-            height: 38,
-            borderRadius: 6,
-            border: "1px solid black",
-            background: "#0d6efd",
-            color: "#fff",
-            fontWeight: 500,
-            fontSize: 16,
-          }}
-          onClick={() => setShowAddTask(true)}
-        >
-          + Thêm nhiệm vụ
-        </button>
-        <select
-          style={{ marginLeft: 16, height: 38, borderRadius: 6, border: "1px solid #d1d5db", fontSize: 14 }}
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as "name" | "assignee" | "startDate")}
-        >
-          <option value="name">Sắp xếp theo tên</option>
-          <option value="assignee">Sắp xếp theo người phụ trách</option>
-          <option value="startDate">Sắp xếp theo ngày bắt đầu</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Tìm kiếm nhiệm vụ"
-          className="search-input"
-          style={{ marginLeft: 16, width: 240 }}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
       </div>
 
-      {/* Bảng nhiệm vụ */}
-      <TaskTable
-        tasks={sortedTasks}
-        onDelete={(task) => {
-          setTaskToDelete(task);
-          setShowConfirmDelete(true);
-        }}
-        onEdit={(task) => {
-          setTaskToEdit(task);
-          setShowEditTask(true);
-        }}
-      />
+      <Footer />
 
-      {/* Modal thêm nhiệm vụ */}
-      {showAddTask && (
-        <AddOrEditTaskModal
-          isOpen={showAddTask}
-          onClose={() => setShowAddTask(false)}
-          onSubmit={handleAddTask}
+      {/* Modals */}
+      {showTaskModal && (
+        <AddEditTaskModal
+          isOpen={showTaskModal}
+          onClose={() => setShowTaskModal(false)}
+          onSubmit={handleSaveTask}
+          initialData={
+            selectedTask
+              ? { name: selectedTask.name, assignee: selectedTask.assignee, status: selectedTask.status }
+              : undefined
+          }
         />
       )}
 
-      {/* Modal sửa nhiệm vụ */}
-      {showEditTask && taskToEdit && (
-        <AddOrEditTaskModal
-          isOpen={showEditTask}
-          onClose={() => {
-            setShowEditTask(false);
-            setTaskToEdit(null);
-          }}
-          onSubmit={(data) => {
-            // update task
-            setTasks((prev) => prev.map((t) => (t.id === taskToEdit.id ? { ...t, ...data, status: data.status as TaskStatus } : t)));
-            setShowEditTask(false);
-            setTaskToEdit(null);
-          }}
-          initialData={{ name: taskToEdit.name, assignee: taskToEdit.assignee, status: taskToEdit.status }}
-        />
-      )}
-
-      {/* Modal xác nhận xoá nhiệm vụ */}
-      {showConfirmDelete && (
-        <ConfirmDeleteModal
-          isOpen={showConfirmDelete}
-          onClose={() => setShowConfirmDelete(false)}
-          onConfirm={handleDeleteTask}
-        />
-      )}
-
-      {/* Modal thêm thành viên */}
-      {showAddMember && (
+      {showMemberModal && (
         <AddMemberModal
-          isOpen={showAddMember}
-          onClose={() => setShowAddMember(false)}
-          onSubmit={(m) => console.log("Thêm thành viên:", m)}
+          isOpen={showMemberModal}
+          onClose={() => setShowMemberModal(false)}
+          onSubmit={(memberData) => {
+            const newMember: Member = {
+              id: teamMembers.length ? Math.max(...teamMembers.map(m => m.id)) + 1 : 1,
+              name: memberData.name,
+              role: memberData.role,
+              initials: memberData.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase(),
+              color: '#9ca3af',
+              email: memberData.email,
+              joinDate: new Date().toLocaleDateString(),
+            };
+            setTeamMembers([...teamMembers, newMember]);
+            setShowMemberModal(false);
+          }}
         />
       )}
 
-      {/* Modal chi tiết thành viên */}
-      {showMemberDetail && (
+      {showDeleteModal && (
+        <ConfirmDeleteModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleConfirmDelete}
+          message={`Bạn có chắc chắn muốn xóa nhiệm vụ "${taskToDelete?.name}"?`}
+        />
+      )}
+
+      {showMemberDetailModal && selectedMember && (
         <MemberDetailModal
-          isOpen={showMemberDetail}
-          onClose={() => setShowMemberDetail(false)}
-          member={mockMember}
+          isOpen={showMemberDetailModal}
+          onClose={() => setShowMemberDetailModal(false)}
+          member={{
+            name: selectedMember.name,
+            email: selectedMember.email ?? "",
+            role: selectedMember.role,
+            joinDate: selectedMember.joinDate ?? "",
+          }}
         />
       )}
     </div>
   );
-}
+};
+
+export default ProjectDetail;
