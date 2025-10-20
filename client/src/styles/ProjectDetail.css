@@ -1,0 +1,71 @@
+.project-detail-page {
+  min-width: 1920px;
+  height: 962px;
+  background: white;
+  color: black;
+  padding: 16px 8px 16px 8px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  font-family: "Roboto", sans-serif;
+}
+
+/* Header */
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.project-title {
+  font-family: Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 23.54px;
+  line-height: 28.8px;
+}
+
+/* Phần thông tin dự án */
+.project-info {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.project-thumb {
+  width: 200px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.project-meta {
+  flex: 1;
+}
+
+.meta-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.meta-desc {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+/* Thanh công cụ nhiệm vụ */
+.task-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  width: 240px;
+}

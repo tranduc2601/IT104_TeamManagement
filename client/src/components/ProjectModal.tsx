@@ -12,7 +12,7 @@ const ProjectModal = ({ isOpen, onClose, onSave, defaultValue = "" }: Props) => 
   const [name, setName] = useState(defaultValue);
 
   useEffect(() => {
-    setName(defaultValue); // Reset khi mở modal
+    setName(defaultValue); 
   }, [defaultValue]);
 
   if (!isOpen) return null;
