@@ -149,7 +149,6 @@
 .project-info-card {
   background: white;
   border-radius: 8px;
-  padding: 24px;
   margin-bottom: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: grid;
@@ -446,7 +445,6 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 12px;
   min-height: 220px;
 }
 
