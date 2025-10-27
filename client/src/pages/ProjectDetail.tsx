@@ -80,19 +80,13 @@ const ProjectDetail: React.FC = () => {
 
   // Nhận dữ liệu modal: { name, assignee, status }
   const handleSaveTask = (taskData: { name: string; assignee: string; status: string }) => {
-    const statusMap: Record<string, Task['status']> = {
-      todo: 'To do',
-      inprogress: 'In Progress',
-      pending: 'Pending',
-      done: 'Done',
-    };
-              {/* Đã xóa controls thừa */}
+    // taskData.status is expected to be display label like 'To do' / 'In Progress'
     if (selectedTask) {
       // Sửa nhiệm vụ
       setTasks(
         tasks.map((t) =>
           t.id === selectedTask.id
-            ? { ...t, name: taskData.name, assignee: taskData.assignee, status: statusMap[taskData.status] }
+      ? { ...t, name: taskData.name, assignee: taskData.assignee, status: taskData.status as Task['status'] }
             : t
         )
       );
@@ -106,7 +100,7 @@ const ProjectDetail: React.FC = () => {
         startDate: new Date().toISOString().slice(5).replace('-', ' - '),
         endDate: '',
         progress: 'Chưa cập nhật' as Task['progress'],
-        status: statusMap[taskData.status],
+  status: taskData.status as Task['status'],
       };
       setTasks([...tasks, newTask]);
     }
@@ -118,13 +112,14 @@ const ProjectDetail: React.FC = () => {
     setShowMemberDetailModal(true);
   };
 
-  const groupedTasks = tasks.reduce((acc: Record<string, Task[]>, task) => {
-    if (!acc[task.status]) acc[task.status] = [];
-              {/* Sắp xếp & tìm kiếm thành viên */}
-    return acc;
-  }, {});
-
+  // Các trạng thái hiển thị theo thứ tự
   const statuses = ["To do", "In Progress", "Pending", "Done"];
+
+  // Nhóm nhiệm vụ theo trạng thái để render từng section
+  const groupedTasks = statuses.reduce((acc: Record<string, Task[]>, s) => {
+    acc[s] = tasks.filter((t) => t.status === s);
+    return acc;
+  }, {} as Record<string, Task[]>);
 
   return (
     <div className="project-detail-page">
@@ -330,6 +325,7 @@ const ProjectDetail: React.FC = () => {
               ? { name: selectedTask.name, assignee: selectedTask.assignee, status: selectedTask.status }
               : undefined
           }
+          existingNames={tasks.map(t => t.name)}
         />
       )}
 
@@ -337,6 +333,7 @@ const ProjectDetail: React.FC = () => {
         <AddMemberModal
           isOpen={showMemberModal}
           onClose={() => setShowMemberModal(false)}
+          existingEmails={teamMembers.map(m => m.email).filter(Boolean) as string[]}
           onSubmit={(memberData) => {
             const newMember: Member = {
               id: teamMembers.length ? Math.max(...teamMembers.map(m => m.id)) + 1 : 1,

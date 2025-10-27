@@ -1,4 +1,5 @@
 import { useRegisterForm } from "../hooks/useRegisterForm";
+import { addUser, setCurrentUser } from "../utils/storage";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/RegisterForm.css";
 import { useToast } from "../context/ToastContext";
@@ -9,15 +10,10 @@ const RegisterForm = () => {
   const { showToast } = useToast();
 
   const onSuccess = () => {
-    // persist user to localStorage
-    try {
-      const raw = localStorage.getItem("users");
-      const users = raw ? JSON.parse(raw) : [];
-      users.push({ fullName: form.fullName, email: form.email, password: form.password });
-      localStorage.setItem("users", JSON.stringify(users));
-    } catch {
-      // ignore storage error
-    }
+    // persist user via storage helper (demo). In production use axios to call backend API.
+    const newUser = addUser({ fullName: form.fullName, email: form.email, password: form.password });
+    // set current user after registration
+    setCurrentUser(newUser);
     showToast({ type: "success", title: "Thành công", message: "Đăng ký thành công" });
     navigate("/projects");
   };

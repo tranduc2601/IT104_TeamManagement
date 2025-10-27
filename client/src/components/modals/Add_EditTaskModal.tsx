@@ -6,6 +6,7 @@ interface AddOrEditTaskModalProps {
   onClose: () => void;
   onSubmit: (task: { name: string; assignee: string; status: string }) => void;
   initialData?: { name: string; assignee: string; status: string };
+  existingNames?: string[]; // for duplicate name validation
 }
 
 const AddOrEditTaskModal = ({
@@ -13,16 +14,22 @@ const AddOrEditTaskModal = ({
   onClose,
   onSubmit,
   initialData,
+  existingNames,
 }: AddOrEditTaskModalProps) => {
   const [name, setName] = useState("");
   const [assignee, setAssignee] = useState("");
-  const [status, setStatus] = useState("todo");
+  const [status, setStatus] = useState("To do");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
       setAssignee(initialData.assignee);
-      setStatus(initialData.status);
+      // initialData.status may come as 'To do' or short code; normalize to display labels
+      const normalized = ['To do','In Progress','Pending','Done'].includes(initialData.status)
+        ? initialData.status
+        : (initialData.status === 'todo' ? 'To do' : initialData.status);
+      setStatus(normalized);
     }
   }, [initialData]);
 
@@ -30,7 +37,17 @@ const AddOrEditTaskModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name, assignee, status });
+    // validate duplicate name if provided
+    if (name.trim().length === 0) {
+      setError('Tên nhiệm vụ không được để trống');
+      return;
+    }
+    if (existingNames && existingNames.includes(name.trim()) && !(initialData && initialData.name === name.trim())) {
+      setError('Tên nhiệm vụ đã tồn tại');
+      return;
+    }
+    setError(null);
+    onSubmit({ name: name.trim(), assignee, status });
     onClose();
   };
 
@@ -46,8 +63,9 @@ const AddOrEditTaskModal = ({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            required
+            className={error ? 'input-error' : ''}
           />
+          {error && <p className="error-text">{error}</p>}
 
           <label>Người phụ trách</label>
           <input
@@ -58,15 +76,11 @@ const AddOrEditTaskModal = ({
           />
 
           <label>Trạng thái</label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            required
-          >
-            <option value="todo">To Do</option>
-            <option value="inprogress">In Progress</option>
-            <option value="pending">Pending</option>
-            <option value="done">Done</option>
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="To do">To do</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Pending">Pending</option>
+            <option value="Done">Done</option>
           </select>
 
           <div className="modal-actions">

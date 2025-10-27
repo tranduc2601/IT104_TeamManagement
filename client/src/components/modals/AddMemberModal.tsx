@@ -5,18 +5,34 @@ interface AddMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (member: { name: string; role: string; email: string }) => void;
+  existingEmails?: string[]; // used to validate duplicate emails
 }
 
-const AddMemberModal = ({ isOpen, onClose, onSubmit }: AddMemberModalProps) => {
+const AddMemberModal = ({ isOpen, onClose, onSubmit, existingEmails }: AddMemberModalProps) => {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name, role, email });
+    if (!name.trim()) {
+      setError('Họ tên không được để trống');
+      return;
+    }
+    if (!email.trim()) {
+      setError('Email không được để trống');
+      return;
+    }
+    // simple duplicate email check
+    if (existingEmails && existingEmails.some(em => em.toLowerCase() === email.trim().toLowerCase())) {
+      setError('Thành viên đã tồn tại');
+      return;
+    }
+    setError(null);
+    onSubmit({ name: name.trim(), role, email: email.trim() });
     onClose();
   };
 
@@ -30,7 +46,6 @@ const AddMemberModal = ({ isOpen, onClose, onSubmit }: AddMemberModalProps) => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            required
           />
 
           <label>Vai trò</label>
@@ -38,7 +53,6 @@ const AddMemberModal = ({ isOpen, onClose, onSubmit }: AddMemberModalProps) => {
             type="text"
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            required
           />
 
           <label>Email</label>
@@ -46,8 +60,9 @@ const AddMemberModal = ({ isOpen, onClose, onSubmit }: AddMemberModalProps) => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
+            className={error ? 'input-error' : ''}
           />
+          {error && <p className="error-text">{error}</p>}
 
           <div className="modal-actions">
             <button type="submit" className="btn-primary">

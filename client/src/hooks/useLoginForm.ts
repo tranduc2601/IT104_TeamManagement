@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { findUserByEmail, setCurrentUser } from "../utils/storage";
 
 export type LoginData = {
   email: string;
@@ -33,15 +34,14 @@ export const useLoginForm = () => {
 
     // check credentials against localStorage users
     try {
-      const raw = localStorage.getItem("users");
-      const users = raw ? (JSON.parse(raw) as Array<{ email: string; password: string }>) : [];
-      const found = users.find(
-        (u) => u.email.toLowerCase() === form.email.toLowerCase() && u.password === form.password
-      );
-      if (!found) {
+      // try to find user in demo storage
+      const found = findUserByEmail(form.email);
+      if (!found || found.password !== form.password) {
         setErrors({ email: "Thông tin đăng nhập không đúng" });
         return false;
       }
+      // set as current user (demo). In production, replace with server-side session/token via axios.
+      setCurrentUser(found);
       onSuccess();
       setErrors({});
       return true;

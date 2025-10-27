@@ -81,6 +81,17 @@
   font-size: 14px;
 }
 
+.input-error {
+  border-color: #dc3545 !important;
+}
+
+.error-text {
+  color: #dc3545;
+  font-size: 13px;
+  margin-top: -12px;
+  margin-bottom: 6px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
