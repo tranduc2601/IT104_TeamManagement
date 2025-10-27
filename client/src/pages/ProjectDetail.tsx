@@ -24,7 +24,7 @@ const ProjectDetail: React.FC = () => {
     Done: false,
   });
 
-  // Modal states
+  // Trạng thái modal
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showMemberModal, setShowMemberModal] = useState(false);
   const [showMembersListModal, setShowMembersListModal] = useState(false);
@@ -78,7 +78,7 @@ const ProjectDetail: React.FC = () => {
     setShowDeleteModal(false);
   };
 
-  // Accepts the modal shape: { name, assignee, status } where status is 'todo'|'inprogress'|...
+  // Nhận dữ liệu modal: { name, assignee, status }
   const handleSaveTask = (taskData: { name: string; assignee: string; status: string }) => {
     const statusMap: Record<string, Task['status']> = {
       todo: 'To do',
@@ -86,9 +86,9 @@ const ProjectDetail: React.FC = () => {
       pending: 'Pending',
       done: 'Done',
     };
-
+              {/* Đã xóa controls thừa */}
     if (selectedTask) {
-      // Edit existing task
+      // Sửa nhiệm vụ
       setTasks(
         tasks.map((t) =>
           t.id === selectedTask.id
@@ -97,7 +97,7 @@ const ProjectDetail: React.FC = () => {
         )
       );
     } else {
-      // Add new task
+      // Thêm nhiệm vụ mới
       const newTask: Task = {
         id: tasks.length ? Math.max(...tasks.map((t) => t.id)) + 1 : 1,
         name: taskData.name,
@@ -120,7 +120,7 @@ const ProjectDetail: React.FC = () => {
 
   const groupedTasks = tasks.reduce((acc: Record<string, Task[]>, task) => {
     if (!acc[task.status]) acc[task.status] = [];
-    acc[task.status].push(task);
+              {/* Sắp xếp & tìm kiếm thành viên */}
     return acc;
   }, {});
 
@@ -182,12 +182,12 @@ const ProjectDetail: React.FC = () => {
 
               <div className="members-list">
                 {(() => {
-                  // filter
+                  // Lọc
                   const q = memberSearch.trim().toLowerCase();
                   let list = teamMembers.filter((m) =>
                     [m.name, m.email ?? "", m.role].join(" ").toLowerCase().includes(q)
                   );
-                  // sort
+                  // Sắp xếp
                   list = list.sort((a, b) => {
                     if (memberSort === "name") return a.name.localeCompare(b.name);
                     if (memberSort === "role") return a.role.localeCompare(b.role);

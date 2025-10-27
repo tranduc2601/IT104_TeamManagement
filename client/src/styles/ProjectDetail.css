@@ -1,4 +1,4 @@
-/* ProjectDetail.css */
+/* CSS: Trang chi tiết dự án */
 
 * {
   margin: 0;
@@ -6,7 +6,7 @@
   box-sizing: border-box;
 }
 
-/* Page Layout */
+/* Bố cục trang */
 .project-detail-page {
   min-height: 100vh;
   background: #f9fafb;
@@ -15,7 +15,7 @@
   flex-direction: column;
 }
 
-/* Top Navbar */
+/* Thanh điều hướng trên */
 .top-navbar {
   background-color: #2d3748;
   color: white;
@@ -52,14 +52,14 @@
   font-weight: 600;
 }
 
-/* Page Container */
+/* Khung trang chính */
 .page-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 32px 24px;
   flex: 1;
   width: 100%;
-  overflow-x: hidden; /* prevent horizontal scrolling caused by absolute elements */
+  overflow-x: hidden; /* tránh scroll ngang do phần tử vị trí tuyệt đối */
 }
 
 .main-card {
@@ -88,19 +88,19 @@
   /* will be absolutely positioned inside .main-card */
 }
 
-/* Place members-card in normal flow to avoid overlapping and horizontal scrolling */
+/* Đặt khối thành viên trong luồng để tránh chồng chéo và scroll ngang */
 .main-card .members-card {
   position: static;
   width: auto;
 }
 
-/* Ensure the main card isn't used for absolute layout */
+/* Đảm bảo khung chính không dùng vị trí tuyệt đối */
 .main-card { position: relative; }
 
-/* remove large right padding on left-column since members-card is not absolute anymore */
+/* Bỏ padding phải lớn vì khối thành viên không còn vị trí tuyệt đối */
 .main-card .left-column { padding-right: 0; }
 
-/* Header card: project info left + members right */
+/* Header: thông tin dự án (trái) + thành viên (phải) */
 .header-card {
   display: flex;
   justify-content: space-between;
@@ -111,33 +111,34 @@
 }
 
 .header-members {
+  /* Fixed member card size to match design */
   width: 386px;
-  height: auto;
+  height: 275px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 12px;
+  transform: none;
+  opacity: 1;
 }
 
-/* Left project info card fixed size */
+/* Khối thông tin dự án (cột trái) */
 .header-card .project-info-card {
   width: 648px;
   height: auto;
   box-sizing: border-box;
 }
 
-/* header-members uses normal flow now (no absolute positioning) */
-
-/* Ensure header-card has enough height for absolute children */
+/* Đảm bảo header có chiều cao phù hợp */
 .header-card { min-height: 275px; }
 
-/* Tasks container below header */
+/* Vùng nhiệm vụ (dưới header) */
 .tasks-container {
   margin-top: 12px;
 }
 
-/* Project Title */
+/* Tiêu đề dự án */
 .project-main-title {
   font-size: 24px;
   font-weight: 500;
@@ -145,14 +146,14 @@
   margin: 0 0 20px 0;
 }
 
-/* Project Info Card */
+/* Thẻ thông tin dự án */
 .project-info-card {
   background: white;
   border-radius: 8px;
   margin-bottom: 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: grid;
-  grid-template-columns: 176px 1fr; /* thumbnail column + meta column */
+  grid-template-columns: 176px 1fr;
   gap: 20px;
   align-items: start;
   /* ensure project-info-card has enough height so left column can stretch and button can align with member-controls */
@@ -172,7 +173,7 @@
   gap: 16px;
 }
 
-/* new action row under project description to align with member-controls */
+/* Nút hành động: Thêm nhiệm vụ */
 .btn-add-task {
   background-color: #2563eb;
   color: white;
@@ -206,7 +207,7 @@
   height: 100%;
 }
 
-/* right-info uses existing .project-meta styles */
+/* right-info dùng các style của .project-meta */
 
 .thumbnail-image {
   width: 100%;
@@ -246,7 +247,7 @@
   background-color: #1d4ed8;
 }
 
-/* Task Controls */
+/* Điều khiển nhiệm vụ (sắp xếp / tìm kiếm) */
 .task-controls {
   display: flex;
   justify-content: flex-end;
@@ -283,7 +284,7 @@
   border-color: #2563eb;
 }
 
-/* Task Card */
+/* Thẻ nhiệm vụ */
 .task-card {
   background: white;
   border-radius: 8px;
@@ -298,7 +299,7 @@
   color: #1a202c;
 }
 
-/* Task Table Header */
+/* Header bảng nhiệm vụ */
 .task-table-header {
   display: grid;
   grid-template-columns: 60px 2fr 1.2fr 0.8fr 1fr 1fr 0.9fr 140px;
@@ -316,7 +317,7 @@
   text-align: center;
 }
 
-/* Task Section */
+/* Phần nhiệm vụ (To do / In Progress / ...) */
 .task-section {
   margin-bottom: 8px;
 }
@@ -348,7 +349,7 @@
   color: #1a202c;
 }
 
-/* Task Row */
+/* Dòng nhiệm vụ */
 .task-row {
   display: grid;
   grid-template-columns: 60px 2fr 1.2fr 0.8fr 1fr 1fr 0.9fr 140px;
@@ -373,7 +374,7 @@
   color: #2563eb;
 }
 
-/* Badges */
+/* Nhãn (badge) */
 .badge {
   padding: 4px 12px;
   border-radius: 4px;
@@ -409,7 +410,7 @@
   background-color: #ef4444;
 }
 
-/* Action Buttons */
+/* Nút hành động */
 .td-actions {
   display: flex;
   gap: 6px;
@@ -440,7 +441,7 @@
   color: white;
 }
 
-/* Members Card */
+/* Thẻ thành viên */
 .members-card {
   background: white;
   border-radius: 8px;
@@ -489,7 +490,7 @@
   scrollbar-color: #cbd5e0 transparent;
 }
 
-/* very thin webkit scrollbar for members list */
+/* Scrollbar mỏng cho danh sách thành viên (webkit) */
 .members-list::-webkit-scrollbar { width: 4px; }
 .members-list::-webkit-scrollbar-track { background: transparent; }
 .members-list::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 999px; }
@@ -581,7 +582,7 @@
   align-self: center;
 }
 
-/* Footer */
+/* Chân trang */
 .page-footer {
   background-color: #2d3748;
   color: white;
@@ -596,7 +597,7 @@
   color: #cbd5e0;
 }
 
-/* Responsive Design */
+/* Thiết kế đáp ứng */
 @media (max-width: 1200px) {
   .content-wrapper {
     flex-direction: column;
