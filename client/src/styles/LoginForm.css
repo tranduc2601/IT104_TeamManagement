@@ -1,6 +1,7 @@
 .login-form {
   width: 533px;
-  height: 484px;
+  min-height: 484px;
+  height: auto;
   background-color: #ffffff;
   border: 1px solid rgba(228, 228, 231, 1);
   border-radius: 20px;
@@ -31,7 +32,8 @@
 }
 
 .login-form input {
-  width: 472px;
+  width: 100%;
+  max-width: 472px;
   height: 65px;
   padding: 16px;
   font-size: 14px;
@@ -59,8 +61,17 @@
   margin-bottom: 6px;
 }
 
+/* InputField's error message class (used by InputField component) */
+.error-message {
+  font-size: 12px;
+  color: red;
+  margin-top: -6px;
+  margin-bottom: 6px;
+}
+
 .login-form button {
-  width: 472px;
+  width: 100%;
+  max-width: 472px;
   height: 65px;
   background-color: #0d6efd;
   color: #fff;
@@ -69,7 +80,8 @@
   border: none;
   border-radius: 9px;
   cursor: pointer;
-  margin-top: 63px;
+  margin-top: auto; /* push to bottom when there is space */
+  flex-shrink: 0; /* prevent shrinking when container becomes tight */
   transition: background-color 0.2s;
 }
 

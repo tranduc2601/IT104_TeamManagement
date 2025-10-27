@@ -5,6 +5,7 @@ import AddEditTaskModal from "../components/modals/Add_EditTaskModal";
 import AddMemberModal from "../components/modals/AddMemberModal";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
 import MemberDetailModal from "../components/modals/MemberDetailModal";
+import MembersModal from "../components/modals/MembersModal";
 import type { Task, Member } from "../interfaces/project";
 import { initialTasks, members } from "../mock/projectData";
 import "../styles/ProjectDetail.css";
@@ -12,7 +13,8 @@ import "../styles/ProjectDetail.css";
 const ProjectDetail: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [teamMembers, setTeamMembers] = useState<Member[]>(members);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [memberSearch, setMemberSearch] = useState("");
+  const [memberSort, setMemberSort] = useState<string>("name");
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
@@ -25,6 +27,7 @@ const ProjectDetail: React.FC = () => {
   // Modal states
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showMemberModal, setShowMemberModal] = useState(false);
+  const [showMembersListModal, setShowMembersListModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMemberDetailModal, setShowMemberDetailModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -133,22 +136,24 @@ const ProjectDetail: React.FC = () => {
           <div className="header-card">
             {/* Project Info on the left */}
             <div className="project-info-card">
-              <div className="project-thumbnail">
-                <img
-                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop"
-                  alt="project"
-                  className="thumbnail-image"
-                />
+              <div className="left-info">
+                <div className="project-thumbnail">
+                  <img
+                    src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop"
+                    alt="project"
+                    className="thumbnail-image"
+                  />
+                </div>
+                <button className="btn-add-task" onClick={handleAddTask}>
+                  + Thêm nhiệm vụ
+                </button>
               </div>
-              <div className="project-meta">
+              <div className="right-info project-meta">
                 <h2 className="project-main-title">Xây dựng website thương mại điện tử</h2>
                 <p className="project-description">
                   Dự án nhằm phát triển một nền tảng thương mại điện tử với các
                   tính năng như giỏ hàng, thanh toán và quản lý sản phẩm.
                 </p>
-                <button className="btn-add-task" onClick={handleAddTask}>
-                  + Thêm nhiệm vụ
-                </button>
               </div>
             </div>
 
@@ -156,56 +161,81 @@ const ProjectDetail: React.FC = () => {
             <div className="members-card header-members">
               <div className="members-header">
                 <h3 className="members-title">Thành viên</h3>
-                <button
-                  className="btn-add-member"
-                  onClick={() => setShowMemberModal(true)}
-                >
-                  + Thêm thành viên
-                </button>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <button
+                    className="btn-add-member"
+                    onClick={() => setShowMemberModal(true)}
+                  >
+                    + Thêm thành viên
+                  </button>
+                  <button
+                    className="ellipsis-btn"
+                    title="Quản lý thành viên"
+                    onClick={() => setShowMembersListModal(true)}
+                  >
+                    <i className="fa-solid fa-ellipsis" />
+                  </button>
+                </div>
               </div>
 
+              {/* upper duplicate controls removed - keep the original controls below */}
+
               <div className="members-list">
-                {teamMembers.map((member) => (
-                  <div key={member.id} className="member-item">
-                    <div
-                      className="member-avatar"
-                      style={{ backgroundColor: member.color }}
-                    >
-                      {member.initials}
+                {(() => {
+                  // filter
+                  const q = memberSearch.trim().toLowerCase();
+                  let list = teamMembers.filter((m) =>
+                    [m.name, m.email ?? "", m.role].join(" ").toLowerCase().includes(q)
+                  );
+                  // sort
+                  list = list.sort((a, b) => {
+                    if (memberSort === "name") return a.name.localeCompare(b.name);
+                    if (memberSort === "role") return a.role.localeCompare(b.role);
+                    return 0;
+                  });
+
+                  return list.map((member) => (
+                    <div key={member.id} className="member-item-grid">
+                      <div
+                        className="member-avatar"
+                        style={{ backgroundColor: member.color }}
+                        onClick={() => handleMemberClick(member)}
+                      >
+                        {member.initials}
+                      </div>
+                      <div className="member-info">
+                        <div className="member-name">{member.name}</div>
+                        <div className="member-role">{member.role}</div>
+                      </div>
                     </div>
-                    <div className="member-info">
-                      <div className="member-name">{member.name}</div>
-                      <div className="member-role">{member.role}</div>
-                    </div>
-                    <button
-                      className="member-menu"
-                      onClick={() => handleMemberClick(member)}
-                    >
-                      ⋮
-                    </button>
-                  </div>
-                ))}
+                  ));
+                })()}
+              </div>
+
+              {/* sort & search moved into members card */}
+              <div className="member-controls">
+                <select
+                  className="sort-select"
+                  value={memberSort}
+                  onChange={(e) => setMemberSort(e.target.value)}
+                >
+                  <option value="name">Tên</option>
+                  <option value="role">Vai trò</option>
+                </select>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Tìm kiếm thành viên"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                />
               </div>
             </div>
           </div>
 
           {/* Tasks area below header */}
           <div className="tasks-container">
-            <div className="task-controls">
-              <select className="sort-select">
-                <option>Sắp xếp theo</option>
-                <option>Tên nhiệm vụ</option>
-                <option>Người phụ trách</option>
-                <option>Ngày bắt đầu</option>
-              </select>
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Tìm kiếm nhiệm vụ"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+          
 
             <div className="task-card">
               <h3 className="task-card-title">Danh Sách Nhiệm Vụ</h3>
@@ -342,6 +372,15 @@ const ProjectDetail: React.FC = () => {
             role: selectedMember.role,
             joinDate: selectedMember.joinDate ?? "",
           }}
+        />
+      )}
+
+      {showMembersListModal && (
+        <MembersModal
+          isOpen={showMembersListModal}
+          onClose={() => setShowMembersListModal(false)}
+          members={teamMembers}
+          onSave={(updated) => setTeamMembers(updated)}
         />
       )}
     </div>

@@ -1,20 +1,39 @@
 import { useRegisterForm } from "../hooks/useRegisterForm";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/RegisterForm.css";
+import { useToast } from "../context/ToastContext";
 
 const RegisterForm = () => {
   const { form, errors, handleChange, handleSubmit } = useRegisterForm();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const onSuccess = () => {
-    alert("Đăng ký thành công!");
+    // persist user to localStorage
+    try {
+      const raw = localStorage.getItem("users");
+      const users = raw ? JSON.parse(raw) : [];
+      users.push({ fullName: form.fullName, email: form.email, password: form.password });
+      localStorage.setItem("users", JSON.stringify(users));
+    } catch {
+      // ignore storage error
+    }
+    showToast({ type: "success", title: "Thành công", message: "Đăng ký thành công" });
+    navigate("/projects");
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    const ok = handleSubmit(e, onSuccess);
+    if (!ok) {
+      // show first error message as toast
+      const firstError = Object.values(errors).find(Boolean) as string | undefined;
+      showToast({ type: "error", title: "Lỗi", message: firstError ?? "Thông tin không hợp lệ" });
+    }
   };
 
   return (
     <div className="register-container">
-      <form
-        onSubmit={(e) => handleSubmit(e, onSuccess)}
-        className="register-form"
-      >
+      <form onSubmit={handleFormSubmit} className="register-form">
         <h1 className="title">Đăng ký</h1>
 
         <input
