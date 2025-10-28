@@ -1,12 +1,28 @@
 import React, { useEffect } from "react";
 import { Modal, Form, Input, Select, DatePicker } from "antd";
-import 'antd/dist/reset.css';
+import "antd/dist/reset.css";
 
 interface AddOrEditTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (task: { name: string; assignee: string; status: string; startDate?: string; endDate?: string; priority?: string; progress?: string }) => void;
-  initialData?: { name: string; assignee: string; status: string; startDate?: string; endDate?: string; priority?: string; progress?: string };
+  onSubmit: (task: {
+    name: string;
+    assignee: string;
+    status: string;
+    startDate?: string;
+    endDate?: string;
+    priority?: string;
+    progress?: string;
+  }) => void;
+  initialData?: {
+    name: string;
+    assignee: string;
+    status: string;
+    startDate?: string;
+    endDate?: string;
+    priority?: string;
+    progress?: string;
+  };
   existingNames?: string[]; // for duplicate name validation
 }
 
@@ -14,9 +30,21 @@ const { Option } = Select;
 
 const statusOptions = ["To do", "In Progress", "Pending", "Done"];
 const priorityOptions = ["Thấp", "Trung Bình", "Cao"];
-const progressOptions = ["Đúng tiến độ", "Có rủi ro", "Trễ hạn", "Hoàn thành", "Chưa cập nhật"];
+const progressOptions = [
+  "Đúng tiến độ",
+  "Có rủi ro",
+  "Trễ hạn",
+  "Hoàn thành",
+  "Chưa cập nhật",
+];
 
-const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose, onSubmit, initialData, existingNames = [] }) => {
+const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData,
+  existingNames = [],
+}) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -38,8 +66,16 @@ const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-  const startDate = values.startDate ? (values.startDate as { format: (f: string) => string }).format('MM/DD/YYYY') : undefined;
-  const endDate = values.endDate ? (values.endDate as { format: (f: string) => string }).format('MM/DD/YYYY') : undefined;
+      const startDate = values.startDate
+        ? (values.startDate as { format: (f: string) => string }).format(
+            "MM/DD/YYYY"
+          )
+        : undefined;
+      const endDate = values.endDate
+        ? (values.endDate as { format: (f: string) => string }).format(
+            "MM/DD/YYYY"
+          )
+        : undefined;
       onSubmit({
         name: values.name.trim(),
         assignee: values.assignee,
@@ -58,11 +94,11 @@ const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose
 
   return (
     <Modal
-      title={initialData ? 'Sửa nhiệm vụ' : 'Thêm/sửa nhiệm vụ'}
+      title={initialData ? "Sửa nhiệm vụ" : "Thêm/sửa nhiệm vụ"}
       open={isOpen}
       onCancel={onClose}
       onOk={handleOk}
-      okText={initialData ? 'Lưu' : 'Lưu'}
+      okText={initialData ? "Lưu" : "Lưu"}
       cancelText="Hủy"
       width={520}
       centered
@@ -73,18 +109,31 @@ const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose
           label="Tên nhiệm vụ"
           name="name"
           rules={[
-            { required: true, message: 'Tên nhiệm vụ không được để trống' },
+            { required: true, message: "Tên nhiệm vụ không được để trống" },
             {
               validator: (_: unknown, value: unknown) => {
-                const raw = typeof value === 'string' ? value.trim() : value ? String(value).trim() : '';
+                const raw =
+                  typeof value === "string"
+                    ? value.trim()
+                    : value
+                    ? String(value).trim()
+                    : "";
                 if (!raw) return Promise.resolve();
-                const duplicate = existingNames.some((n: string) => n.toLowerCase() === raw.toLowerCase());
-                if (duplicate && !(initialData && initialData.name.toLowerCase() === raw.toLowerCase())) {
-                  return Promise.reject(new Error('Tên nhiệm vụ đã tồn tại'));
+                const duplicate = existingNames.some(
+                  (n: string) => n.toLowerCase() === raw.toLowerCase()
+                );
+                if (
+                  duplicate &&
+                  !(
+                    initialData &&
+                    initialData.name.toLowerCase() === raw.toLowerCase()
+                  )
+                ) {
+                  return Promise.reject(new Error("Tên nhiệm vụ đã tồn tại"));
                 }
                 return Promise.resolve();
-              }
-            }
+              },
+            },
           ]}
         >
           <Input placeholder="Nhập tên nhiệm vụ" />
@@ -94,29 +143,45 @@ const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose
           <Input placeholder="Chọn người phụ trách" />
         </Form.Item>
 
-        <Form.Item label="Trạng thái" name="status" rules={[{ required: true, message: 'Chọn trạng thái nhiệm vụ' }]}> 
+        <Form.Item
+          label="Trạng thái"
+          name="status"
+          rules={[{ required: true, message: "Chọn trạng thái nhiệm vụ" }]}
+        >
           <Select placeholder="Chọn trạng thái nhiệm vụ">
-            {statusOptions.map(s => <Option key={s} value={s}>{s}</Option>)}
+            {statusOptions.map((s) => (
+              <Option key={s} value={s}>
+                {s}
+              </Option>
+            ))}
           </Select>
         </Form.Item>
 
         <Form.Item label="Ngày bắt đầu" name="startDate">
-          <DatePicker style={{ width: '100%' }} format={'MM/DD/YYYY'} />
+          <DatePicker style={{ width: "100%" }} format={"MM/DD/YYYY"} />
         </Form.Item>
 
         <Form.Item label="Hạn cuối" name="endDate">
-          <DatePicker style={{ width: '100%' }} format={'MM/DD/YYYY'} />
+          <DatePicker style={{ width: "100%" }} format={"MM/DD/YYYY"} />
         </Form.Item>
 
         <Form.Item label="Độ ưu tiên" name="priority">
           <Select placeholder="Chọn độ ưu tiên">
-            {priorityOptions.map(p => <Option key={p} value={p}>{p}</Option>)}
+            {priorityOptions.map((p) => (
+              <Option key={p} value={p}>
+                {p}
+              </Option>
+            ))}
           </Select>
         </Form.Item>
 
         <Form.Item label="Tiến độ" name="progress">
           <Select placeholder="Chọn tiến độ">
-            {progressOptions.map(p => <Option key={p} value={p}>{p}</Option>)}
+            {progressOptions.map((p) => (
+              <Option key={p} value={p}>
+                {p}
+              </Option>
+            ))}
           </Select>
         </Form.Item>
       </Form>
@@ -125,4 +190,3 @@ const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose
 };
 
 export default AddOrEditTaskModal;
- 
