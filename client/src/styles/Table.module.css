@@ -1,0 +1,72 @@
+/* Used by: src/pages/ProjectList.tsx */
+.tableContainer {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead {
+  background-color: #000;
+  color: #fff;
+}
+
+.table th,
+.table td {
+  padding: 10px 16px;
+  text-align: left;
+  border-top: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 60px;
+  text-align: center;
+}
+
+.table th:last-child,
+.table td:last-child {
+  width: 200px;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn {
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+.edit {
+  background: #facc15;
+  color: #000;
+}
+
+.delete {
+  background: #ef4444;
+}
+
+.detail {
+  background: #3b82f6;
+}

@@ -1,3 +1,5 @@
+/* Used by: src/components/modals/MembersModal.tsx, src/components/modals/MemberDetailModal.tsx, src/components/modals/ConfirmDeleteModal.tsx, src/components/modals/AddMemberModal.tsx */
+
 /* Overlay nền tối */
 .modal-overlay {
   position: fixed;

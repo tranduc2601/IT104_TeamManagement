@@ -1,6 +1,6 @@
 import Header from "../layouts/Header";
 import Footer from "../layouts/Footer";
-import styles from "../components/Table.module.css";
+import styles from "../styles/Table.module.css";
 import layoutStyles from "../styles/ProjectList.module.css";
 import { useState } from "react";
 import { Link } from "react-router-dom";

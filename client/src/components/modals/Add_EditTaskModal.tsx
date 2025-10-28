@@ -1,100 +1,128 @@
-import { useState, useEffect } from "react";
-import "../../styles/ModalCommon.css";
+import React, { useEffect } from "react";
+import { Modal, Form, Input, Select, DatePicker } from "antd";
+import 'antd/dist/reset.css';
 
 interface AddOrEditTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (task: { name: string; assignee: string; status: string }) => void;
-  initialData?: { name: string; assignee: string; status: string };
+  onSubmit: (task: { name: string; assignee: string; status: string; startDate?: string; endDate?: string; priority?: string; progress?: string }) => void;
+  initialData?: { name: string; assignee: string; status: string; startDate?: string; endDate?: string; priority?: string; progress?: string };
   existingNames?: string[]; // for duplicate name validation
 }
 
-const AddOrEditTaskModal = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  initialData,
-  existingNames,
-}: AddOrEditTaskModalProps) => {
-  const [name, setName] = useState("");
-  const [assignee, setAssignee] = useState("");
-  const [status, setStatus] = useState("To do");
-  const [error, setError] = useState<string | null>(null);
+const { Option } = Select;
+
+const statusOptions = ["To do", "In Progress", "Pending", "Done"];
+const priorityOptions = ["Thấp", "Trung Bình", "Cao"];
+const progressOptions = ["Đúng tiến độ", "Có rủi ro", "Trễ hạn", "Hoàn thành", "Chưa cập nhật"];
+
+const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose, onSubmit, initialData, existingNames = [] }) => {
+  const [form] = Form.useForm();
 
   useEffect(() => {
     if (initialData) {
-      setName(initialData.name);
-      setAssignee(initialData.assignee);
-      // initialData.status may come as 'To do' or short code; normalize to display labels
-      const normalized = ['To do','In Progress','Pending','Done'].includes(initialData.status)
-        ? initialData.status
-        : (initialData.status === 'todo' ? 'To do' : initialData.status);
-      setStatus(normalized);
+      form.setFieldsValue({
+        name: initialData.name,
+        assignee: initialData.assignee,
+        status: initialData.status,
+        priority: initialData.priority ?? undefined,
+        progress: initialData.progress ?? undefined,
+        startDate: initialData.startDate ?? undefined,
+        endDate: initialData.endDate ?? undefined,
+      });
+    } else {
+      form.resetFields();
     }
-  }, [initialData]);
+  }, [initialData, form, isOpen]);
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // validate duplicate name if provided
-    if (name.trim().length === 0) {
-      setError('Tên nhiệm vụ không được để trống');
-      return;
+  const handleOk = async () => {
+    try {
+      const values = await form.validateFields();
+  const startDate = values.startDate ? (values.startDate as { format: (f: string) => string }).format('MM/DD/YYYY') : undefined;
+  const endDate = values.endDate ? (values.endDate as { format: (f: string) => string }).format('MM/DD/YYYY') : undefined;
+      onSubmit({
+        name: values.name.trim(),
+        assignee: values.assignee,
+        status: values.status,
+        startDate,
+        endDate,
+        priority: values.priority,
+        progress: values.progress,
+      });
+      onClose();
+    } catch (_err) {
+      void _err;
+      // validation failed; antd will show messages
     }
-    if (existingNames && existingNames.includes(name.trim()) && !(initialData && initialData.name === name.trim())) {
-      setError('Tên nhiệm vụ đã tồn tại');
-      return;
-    }
-    setError(null);
-    onSubmit({ name: name.trim(), assignee, status });
-    onClose();
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-box large">
-        <h2 className="modal-title">
-          {initialData ? "Sửa nhiệm vụ" : "Thêm nhiệm vụ"}
-        </h2>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <label>Tên nhiệm vụ</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={error ? 'input-error' : ''}
-          />
-          {error && <p className="error-text">{error}</p>}
+    <Modal
+      title={initialData ? 'Sửa nhiệm vụ' : 'Thêm/sửa nhiệm vụ'}
+      open={isOpen}
+      onCancel={onClose}
+      onOk={handleOk}
+      okText={initialData ? 'Lưu' : 'Lưu'}
+      cancelText="Hủy"
+      width={520}
+      centered
+      destroyOnClose
+    >
+      <Form form={form} layout="vertical">
+        <Form.Item
+          label="Tên nhiệm vụ"
+          name="name"
+          rules={[
+            { required: true, message: 'Tên nhiệm vụ không được để trống' },
+            {
+              validator: (_: unknown, value: unknown) => {
+                const raw = typeof value === 'string' ? value.trim() : value ? String(value).trim() : '';
+                if (!raw) return Promise.resolve();
+                const duplicate = existingNames.some((n: string) => n.toLowerCase() === raw.toLowerCase());
+                if (duplicate && !(initialData && initialData.name.toLowerCase() === raw.toLowerCase())) {
+                  return Promise.reject(new Error('Tên nhiệm vụ đã tồn tại'));
+                }
+                return Promise.resolve();
+              }
+            }
+          ]}
+        >
+          <Input placeholder="Nhập tên nhiệm vụ" />
+        </Form.Item>
 
-          <label>Người phụ trách</label>
-          <input
-            type="text"
-            value={assignee}
-            onChange={(e) => setAssignee(e.target.value)}
-            required
-          />
+        <Form.Item label="Người phụ trách" name="assignee">
+          <Input placeholder="Chọn người phụ trách" />
+        </Form.Item>
 
-          <label>Trạng thái</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="To do">To do</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Pending">Pending</option>
-            <option value="Done">Done</option>
-          </select>
+        <Form.Item label="Trạng thái" name="status" rules={[{ required: true, message: 'Chọn trạng thái nhiệm vụ' }]}> 
+          <Select placeholder="Chọn trạng thái nhiệm vụ">
+            {statusOptions.map(s => <Option key={s} value={s}>{s}</Option>)}
+          </Select>
+        </Form.Item>
 
-          <div className="modal-actions">
-            <button type="submit" className="btn-primary">
-              {initialData ? "Lưu thay đổi" : "Thêm mới"}
-            </button>
-            <button type="button" onClick={onClose} className="btn-cancel">
-              Hủy
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <Form.Item label="Ngày bắt đầu" name="startDate">
+          <DatePicker style={{ width: '100%' }} format={'MM/DD/YYYY'} />
+        </Form.Item>
+
+        <Form.Item label="Hạn cuối" name="endDate">
+          <DatePicker style={{ width: '100%' }} format={'MM/DD/YYYY'} />
+        </Form.Item>
+
+        <Form.Item label="Độ ưu tiên" name="priority">
+          <Select placeholder="Chọn độ ưu tiên">
+            {priorityOptions.map(p => <Option key={p} value={p}>{p}</Option>)}
+          </Select>
+        </Form.Item>
+
+        <Form.Item label="Tiến độ" name="progress">
+          <Select placeholder="Chọn tiến độ">
+            {progressOptions.map(p => <Option key={p} value={p}>{p}</Option>)}
+          </Select>
+        </Form.Item>
+      </Form>
+    </Modal>
   );
 };
 
 export default AddOrEditTaskModal;
+ 
