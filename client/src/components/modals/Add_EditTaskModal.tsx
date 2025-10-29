@@ -1,5 +1,8 @@
 import React, { useEffect } from "react";
 import { Modal, Form, Input, Select, DatePicker } from "antd";
+import dayjs, { Dayjs } from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
 import 'antd/dist/reset.css';
 
 interface AddOrEditTaskModalProps {
@@ -14,21 +17,31 @@ const { Option } = Select;
 
 const statusOptions = ["To do", "In Progress", "Pending", "Done"];
 const priorityOptions = ["Thấp", "Trung Bình", "Cao"];
-const progressOptions = ["Đúng tiến độ", "Có rủi ro", "Trễ hạn", "Hoàn thành", "Chưa cập nhật"];
+const progressOptions = ["Đúng tiến độ", "Có rủi ro", "Trễ hạn"];
 
 const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose, onSubmit, initialData, existingNames = [] }) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
     if (initialData) {
+      // convert possible string dates into dayjs objects for DatePicker
+      const parse = (d: unknown): Dayjs | undefined => {
+        if (!d) return undefined;
+        if (dayjs.isDayjs(d)) return d as Dayjs;
+        const str = String(d);
+        // try common formats stored in app
+        const parsed = dayjs(str, ["MM/DD/YYYY", "MM - DD", "YYYY-MM-DD"], true);
+        return parsed.isValid() ? parsed : undefined;
+      };
+
       form.setFieldsValue({
         name: initialData.name,
         assignee: initialData.assignee,
         status: initialData.status,
         priority: initialData.priority ?? undefined,
         progress: initialData.progress ?? undefined,
-        startDate: initialData.startDate ?? undefined,
-        endDate: initialData.endDate ?? undefined,
+        startDate: parse(initialData.startDate),
+        endDate: parse(initialData.endDate),
       });
     } else {
       form.resetFields();
@@ -38,8 +51,9 @@ const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-  const startDate = values.startDate ? (values.startDate as { format: (f: string) => string }).format('MM/DD/YYYY') : undefined;
-  const endDate = values.endDate ? (values.endDate as { format: (f: string) => string }).format('MM/DD/YYYY') : undefined;
+      // Format dates as 'MM - DD' to match mock data format
+      const startDate = values.startDate && dayjs.isDayjs(values.startDate) ? (values.startDate as Dayjs).format('MM - DD') : undefined;
+      const endDate = values.endDate && dayjs.isDayjs(values.endDate) ? (values.endDate as Dayjs).format('MM - DD') : undefined;
       onSubmit({
         name: values.name.trim(),
         assignee: values.assignee,

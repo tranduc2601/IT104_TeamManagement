@@ -7,20 +7,19 @@ import { Link } from "react-router-dom";
 import { mockProjects } from "../mock/projects";
 import { getProjects, addProject, updateProject, deleteProject, addFullProject, updateFullProject, deleteFullProject } from "../utils/storage";
 import { members } from "../mock/projectData";
-import type { Project as FullProject } from "../interfaces/project";
-import type { Project } from "../interfaces/Project.interface";
+import type { ProjectBasic } from "../interfaces/project";
 import Pagination from "../components/Pagination";
 import ProjectModal from "../components/ProjectModal";
-import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
 
 const ProjectList = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setModalOpen] = useState(false);
   const [isDeleteOpen, setDeleteOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editingProject, setEditingProject] = useState<ProjectBasic | null>(null);
   // initialize from localStorage (getProjects) and fallback to mockProjects if empty
-  const [projects, setProjects] = useState<Project[]>(() => {
+  const [projects, setProjects] = useState<ProjectBasic[]>(() => {
     const stored = getProjects();
     return stored && stored.length ? stored : mockProjects;
   });
@@ -43,7 +42,7 @@ const ProjectList = () => {
       if (updated) {
         setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   // also update the full-project entry if exists (keep other fields)
-  updateFullProject({ id: updated.id, name: updated.name, description: "", thumbnail: "", startDate: "", endDate: "", status: "Active", members: members, tasks: [] } as FullProject);
+  updateFullProject({ id: updated.id, name: updated.name, description: "", thumbnail: "", startDate: "", endDate: "", status: "Active", members: members, tasks: [] });
       }
     } else {
       const newProject = addProject(name);
@@ -56,11 +55,11 @@ const ProjectList = () => {
         thumbnail: "",
         startDate: "",
         endDate: "",
-        status: "Active",
+        status: "Active" as const,
         members: members,
         tasks: [],
       };
-  addFullProject(full as FullProject);
+  addFullProject(full);
     }
     setModalOpen(false);
   };

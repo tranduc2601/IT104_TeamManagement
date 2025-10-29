@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../layouts/Header";
 import Footer from "../layouts/Footer";
 import AddEditTaskModal from "../components/modals/Add_EditTaskModal";
@@ -6,10 +6,17 @@ import AddMemberModal from "../components/modals/AddMemberModal";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
 import MemberDetailModal from "../components/modals/MemberDetailModal";
 import MembersModal from "../components/modals/MembersModal";
-import type { Task, Member, Project as FullProject } from "../interfaces/project";
+import type {
+  Task,
+  Member,
+  Project as FullProject,
+} from "../interfaces/project";
 import { initialTasks, members, mockProject } from "../mock/projectData";
-import { mockProjects } from "../mock/projects";
-import { getFullProjectById, updateFullProject, addFullProject } from "../utils/storage";
+import {
+  getFullProjectById,
+  updateFullProject,
+  addFullProject,
+} from "../utils/storage";
 import { useParams } from "react-router-dom";
 import "../styles/ProjectDetail.css";
 
@@ -18,28 +25,29 @@ const ProjectDetail: React.FC = () => {
   const projectId = params.id ? Number(params.id) : mockProject.id;
 
   // load full project from storage if available; otherwise fallback to a sensible default
+  // Always fallback to mockProject if no localStorage data
   const [project, setProject] = useState<FullProject>(() => {
     const stored = getFullProjectById(projectId);
-    if (stored) return stored;
-    const mini = mockProjects.find((p) => p.id === projectId);
-    if (mini) {
-      return {
-        id: mini.id,
-        name: mini.name,
-        description: "",
-        thumbnail: "",
-        startDate: "",
-        endDate: "",
-        status: "Active",
-        members: members,
-        tasks: [],
-      };
-    }
+    if (stored && stored.tasks && stored.members) return stored;
+    // fallback: always use mockProject for missing/invalid data
     return mockProject;
   });
 
-  const [tasks, setTasks] = useState<Task[]>(project.tasks ?? initialTasks);
-  const [teamMembers, setTeamMembers] = useState<Member[]>(project.members ?? members);
+  const [tasks, setTasks] = useState<Task[]>(
+    (() => {
+      const stored = window.localStorage.getItem('tasks_mock');
+      if (stored) {
+        try {
+          const arr = JSON.parse(stored);
+          if (Array.isArray(arr)) return arr;
+        } catch { /* ignore parse error */ }
+      }
+      return project.tasks && project.tasks.length ? project.tasks : initialTasks;
+    })()
+  );
+  const [teamMembers, setTeamMembers] = useState<Member[]>(
+    project.members && project.members.length ? project.members : members
+  );
   const [memberSearch, setMemberSearch] = useState("");
   const [memberSort, setMemberSort] = useState<string>("name");
   const [expandedSections, setExpandedSections] = useState<
@@ -104,48 +112,152 @@ const ProjectDetail: React.FC = () => {
       // persist
       const updatedProject = { ...project, tasks: next };
       setProject(updatedProject);
-      updateFullProject(updatedProject);
+      try {
+        updateFullProject(updatedProject);
+      } catch (_e) {
+        void _e;
+      }
+      // Also update localStorage directly for reliability
+      window.localStorage.setItem(
+        "projects_full",
+        JSON.stringify([updatedProject])
+      );
       setTaskToDelete(null);
     }
     setShowDeleteModal(false);
   };
 
-  // Nhận dữ liệu modal: { name, assignee, status }
-  const handleSaveTask = (taskData: { name: string; assignee: string; status: string }) => {
+  // Nhận dữ liệu modal: { name, assignee, status, startDate?, endDate?, priority?, progress? }
+  const handleSaveTask = (taskData: {
+    name: string;
+    assignee: string;
+    status: string;
+    startDate?: string;
+    endDate?: string;
+    priority?: string;
+    progress?: string;
+  }) => {
     // taskData.status is expected to be display label like 'To do' / 'In Progress'
+    // Helper to format date as 'MM - DD'
+    const formatDate = (d: string | undefined): string => {
+      if (!d) return new Date().toISOString().slice(5, 10).replace("-", " - ");
+      // If already in 'MM - DD' format, return as is
+      if (/^\d{2} - \d{2}$/.test(d)) return d;
+      // Otherwise try to parse and format
+      const dateObj = new Date(d);
+      if (!isNaN(dateObj.getTime())) {
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        return `${mm} - ${dd}`;
+      }
+      return d; // return original if can't parse
+    };
     if (selectedTask) {
       // Sửa nhiệm vụ
       const next = tasks.map((t) =>
         t.id === selectedTask.id
-          ? { ...t, name: taskData.name, assignee: taskData.assignee, status: taskData.status as Task['status'] }
+          ? {
+              ...t,
+              name: taskData.name,
+              assignee: taskData.assignee,
+              status: taskData.status as Task["status"],
+              startDate: taskData.startDate ? formatDate(taskData.startDate) : t.startDate,
+              endDate: taskData.endDate ? formatDate(taskData.endDate) : t.endDate,
+              priority: (taskData.priority as Task["priority"]) ?? t.priority,
+              progress: (taskData.progress as Task["progress"]) ?? t.progress,
+            }
           : t
       );
       setTasks(next);
+      window.localStorage.setItem('tasks_mock', JSON.stringify(next));
       const updatedProject = { ...project, tasks: next };
       setProject(updatedProject);
-      updateFullProject(updatedProject);
+      try {
+        updateFullProject(updatedProject);
+      } catch (_e) {
+        void _e;
+      }
+      window.localStorage.setItem(
+        "projects_full",
+        JSON.stringify([updatedProject])
+      );
     } else {
       // Thêm nhiệm vụ mới
       const newTask: Task = {
         id: tasks.length ? Math.max(...tasks.map((t) => t.id)) + 1 : 1,
         name: taskData.name,
         assignee: taskData.assignee,
-        priority: "Trung Bình",
-        startDate: new Date().toISOString().slice(5).replace("-", " - "),
-        endDate: "",
-        progress: "Đúng tiến độ",
+        priority: (taskData.priority as Task["priority"]) ?? "Trung Bình",
+        startDate: formatDate(taskData.startDate),
+        endDate: formatDate(taskData.endDate),
+        progress: (taskData.progress as Task["progress"]) ?? "Đúng tiến độ",
         status: taskData.status as Task["status"],
       };
       const next = [...tasks, newTask];
       setTasks(next);
+      window.localStorage.setItem('tasks_mock', JSON.stringify(next));
       const updatedProject = { ...project, tasks: next };
       setProject(updatedProject);
-      // if project not previously stored, add; otherwise update
-      addFullProject(updatedProject);
-      updateFullProject(updatedProject);
+      try {
+        addFullProject(updatedProject);
+      } catch (_e) {
+        void _e;
+      }
+      try {
+        updateFullProject(updatedProject);
+      } catch (_e) {
+        void _e;
+      }
+      window.localStorage.setItem(
+        "projects_full",
+        JSON.stringify([updatedProject])
+      );
     }
     setShowTaskModal(false);
   };
+
+  // normalize tasks/members when project changes (prevent crashes from bad data)
+  useEffect(() => {
+    const normalizeTask = (t: unknown): Task => {
+      const obj = (t as Partial<Task & Record<string, unknown>>) || {};
+      const id =
+        typeof obj.id === "number" ? obj.id : Number(String(obj.id ?? "")) || 0;
+      const name = (obj.name as string) ?? "";
+      const assignee = (obj.assignee as string) ?? "";
+      const priority = (obj.priority as Task["priority"]) ?? "Trung Bình";
+      const startDate = (obj.startDate as string) ?? "";
+      const endDate = (obj.endDate as string) ?? "";
+      const progress = (obj.progress as Task["progress"]) ?? "Đúng tiến độ";
+      const status = (obj.status as Task["status"]) ?? "To do";
+      return {
+        id,
+        name,
+        assignee,
+        priority,
+        startDate,
+        endDate,
+        progress,
+        status,
+      };
+    };
+
+    // On project change, reload tasks from localStorage if available
+    const stored = window.localStorage.getItem('tasks_mock');
+    if (stored) {
+      try {
+        const arr = JSON.parse(stored);
+        if (Array.isArray(arr)) {
+          setTasks(arr);
+          return;
+        }
+      } catch { /* ignore parse error */ }
+    }
+    const normTasks = (project.tasks ?? []).map(normalizeTask);
+    setTasks(normTasks.length ? normTasks : []);
+
+    const normMembers = (project.members ?? members) as Member[];
+    setTeamMembers(normMembers);
+  }, [project]);
 
   const handleMemberClick = (member: Member) => {
     setSelectedMember(member);
@@ -174,8 +286,11 @@ const ProjectDetail: React.FC = () => {
               <div className="left-info">
                 <div className="project-thumbnail">
                   <img
-                    src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop"
-                    alt="project"
+                    src={
+                      project.thumbnail ||
+                      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop"
+                    }
+                    alt={project.name}
                     className="thumbnail-image"
                   />
                 </div>
@@ -184,11 +299,8 @@ const ProjectDetail: React.FC = () => {
                 </button>
               </div>
               <div className="right-info project-meta">
-                <h2 className="project-main-title">Xây dựng website thương mại điện tử</h2>
-                <p className="project-description">
-                  Dự án nhằm phát triển một nền tảng thương mại điện tử với các
-                  tính năng như giỏ hàng, thanh toán và quản lý sản phẩm.
-                </p>
+                <h2 className="project-main-title">{project.name}</h2>
+                <p className="project-description">{project.description}</p>
               </div>
             </div>
 
@@ -220,12 +332,17 @@ const ProjectDetail: React.FC = () => {
                   // Lọc
                   const q = memberSearch.trim().toLowerCase();
                   let list = teamMembers.filter((m) =>
-                    [m.name, m.email ?? "", m.role].join(" ").toLowerCase().includes(q)
+                    [m.name, m.email ?? "", m.role]
+                      .join(" ")
+                      .toLowerCase()
+                      .includes(q)
                   );
                   // Sắp xếp
                   list = list.sort((a, b) => {
-                    if (memberSort === "name") return a.name.localeCompare(b.name);
-                    if (memberSort === "role") return a.role.localeCompare(b.role);
+                    if (memberSort === "name")
+                      return a.name.localeCompare(b.name);
+                    if (memberSort === "role")
+                      return a.role.localeCompare(b.role);
                     return 0;
                   });
 
@@ -270,8 +387,6 @@ const ProjectDetail: React.FC = () => {
 
           {/* Tasks area below header */}
           <div className="tasks-container">
-          
-
             <div className="task-card">
               <h3 className="task-card-title">Danh Sách Nhiệm Vụ</h3>
 
@@ -362,10 +477,18 @@ const ProjectDetail: React.FC = () => {
           onSubmit={handleSaveTask}
           initialData={
             selectedTask
-              ? { name: selectedTask.name, assignee: selectedTask.assignee, status: selectedTask.status }
+              ? {
+                  name: selectedTask.name,
+                  assignee: selectedTask.assignee,
+                  status: selectedTask.status,
+                  startDate: selectedTask.startDate,
+                  endDate: selectedTask.endDate,
+                  priority: selectedTask.priority,
+                  progress: selectedTask.progress,
+                }
               : undefined
           }
-          existingNames={tasks.map(t => t.name)}
+          existingNames={tasks.map((t) => t.name)}
         />
       )}
 
@@ -373,10 +496,14 @@ const ProjectDetail: React.FC = () => {
         <AddMemberModal
           isOpen={showMemberModal}
           onClose={() => setShowMemberModal(false)}
-          existingEmails={teamMembers.map((m) => m.email).filter(Boolean) as string[]}
+          existingEmails={
+            teamMembers.map((m) => m.email).filter(Boolean) as string[]
+          }
           onSubmit={(memberData) => {
             const newMember: Member = {
-              id: teamMembers.length ? Math.max(...teamMembers.map((m) => m.id)) + 1 : 1,
+              id: teamMembers.length
+                ? Math.max(...teamMembers.map((m) => m.id)) + 1
+                : 1,
               name: memberData.name,
               role: memberData.role,
               initials: memberData.name

@@ -1,7 +1,7 @@
 // src/mock/projects.ts
-import type { Project } from "../interfaces/Project.interface"
+import type { ProjectBasic } from "../interfaces/project"
 
-export const mockProjects: Project[] = [
+export const mockProjects: ProjectBasic[] = [
   { id: 1, name: "Xây dựng website thương mại điện tử" },
   { id: 2, name: "Phát triển ứng dụng di động" },
   { id: 3, name: "Quản lý dữ liệu khách hàng" },

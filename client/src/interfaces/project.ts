@@ -21,6 +21,13 @@ export interface Member {
   joinDate?: string;
 }
 
+// Basic project interface (used in project list)
+export interface ProjectBasic {
+  id: number;
+  name: string;
+}
+
+// Full project interface (with tasks/members, used in project detail)
 export interface Project {
   id: number;
   name: string;
