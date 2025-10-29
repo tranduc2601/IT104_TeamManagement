@@ -5,6 +5,9 @@ import layoutStyles from "../styles/ProjectList.module.css";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { mockProjects } from "../mock/projects";
+import { getProjects, addProject, updateProject, deleteProject, addFullProject, updateFullProject, deleteFullProject } from "../utils/storage";
+import { members } from "../mock/projectData";
+import type { Project as FullProject } from "../interfaces/project";
 import type { Project } from "../interfaces/Project.interface";
 import Pagination from "../components/Pagination";
 import ProjectModal from "../components/ProjectModal";
@@ -16,7 +19,11 @@ const ProjectList = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isDeleteOpen, setDeleteOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [projects, setProjects] = useState(mockProjects);
+  // initialize from localStorage (getProjects) and fallback to mockProjects if empty
+  const [projects, setProjects] = useState<Project[]>(() => {
+    const stored = getProjects();
+    return stored && stored.length ? stored : mockProjects;
+  });
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const itemsPerPage = 5;
@@ -32,18 +39,38 @@ const ProjectList = () => {
 
   const handleSave = (name: string) => {
     if (editingProject) {
-      setProjects((prev) =>
-        prev.map((p) => (p.id === editingProject.id ? { ...p, name } : p))
-      );
+      const updated = updateProject(editingProject.id, name);
+      if (updated) {
+        setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+  // also update the full-project entry if exists (keep other fields)
+  updateFullProject({ id: updated.id, name: updated.name, description: "", thumbnail: "", startDate: "", endDate: "", status: "Active", members: members, tasks: [] } as FullProject);
+      }
     } else {
-      const newId = Math.max(...projects.map((p) => p.id)) + 1;
-      setProjects([...projects, { id: newId, name }]);
+      const newProject = addProject(name);
+      setProjects((prev) => [...prev, newProject]);
+      // create a minimal full-project entry so ProjectDetail can load it
+      const full = {
+        id: newProject.id,
+        name: newProject.name,
+        description: "",
+        thumbnail: "",
+        startDate: "",
+        endDate: "",
+        status: "Active",
+        members: members,
+        tasks: [],
+      };
+  addFullProject(full as FullProject);
     }
     setModalOpen(false);
   };
 
   const handleDelete = () => {
     if (selectedId !== null) {
+      deleteProject(selectedId);
+      // also remove full project storage
+      // also remove full project storage
+      deleteFullProject(selectedId);
       setProjects((prev) => prev.filter((p) => p.id !== selectedId));
       setDeleteOpen(false);
     }

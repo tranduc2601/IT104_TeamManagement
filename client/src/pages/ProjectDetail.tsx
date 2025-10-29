@@ -6,13 +6,40 @@ import AddMemberModal from "../components/modals/AddMemberModal";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
 import MemberDetailModal from "../components/modals/MemberDetailModal";
 import MembersModal from "../components/modals/MembersModal";
-import type { Task, Member } from "../interfaces/project";
-import { initialTasks, members } from "../mock/projectData";
+import type { Task, Member, Project as FullProject } from "../interfaces/project";
+import { initialTasks, members, mockProject } from "../mock/projectData";
+import { mockProjects } from "../mock/projects";
+import { getFullProjectById, updateFullProject, addFullProject } from "../utils/storage";
+import { useParams } from "react-router-dom";
 import "../styles/ProjectDetail.css";
 
 const ProjectDetail: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [teamMembers, setTeamMembers] = useState<Member[]>(members);
+  const params = useParams();
+  const projectId = params.id ? Number(params.id) : mockProject.id;
+
+  // load full project from storage if available; otherwise fallback to a sensible default
+  const [project, setProject] = useState<FullProject>(() => {
+    const stored = getFullProjectById(projectId);
+    if (stored) return stored;
+    const mini = mockProjects.find((p) => p.id === projectId);
+    if (mini) {
+      return {
+        id: mini.id,
+        name: mini.name,
+        description: "",
+        thumbnail: "",
+        startDate: "",
+        endDate: "",
+        status: "Active",
+        members: members,
+        tasks: [],
+      };
+    }
+    return mockProject;
+  });
+
+  const [tasks, setTasks] = useState<Task[]>(project.tasks ?? initialTasks);
+  const [teamMembers, setTeamMembers] = useState<Member[]>(project.members ?? members);
   const [memberSearch, setMemberSearch] = useState("");
   const [memberSort, setMemberSort] = useState<string>("name");
   const [expandedSections, setExpandedSections] = useState<
@@ -72,7 +99,12 @@ const ProjectDetail: React.FC = () => {
 
   const handleConfirmDelete = () => {
     if (taskToDelete) {
-      setTasks(tasks.filter((t) => t.id !== taskToDelete.id));
+      const next = tasks.filter((t) => t.id !== taskToDelete.id);
+      setTasks(next);
+      // persist
+      const updatedProject = { ...project, tasks: next };
+      setProject(updatedProject);
+      updateFullProject(updatedProject);
       setTaskToDelete(null);
     }
     setShowDeleteModal(false);
@@ -83,26 +115,34 @@ const ProjectDetail: React.FC = () => {
     // taskData.status is expected to be display label like 'To do' / 'In Progress'
     if (selectedTask) {
       // Sửa nhiệm vụ
-      setTasks(
-        tasks.map((t) =>
-          t.id === selectedTask.id
-      ? { ...t, name: taskData.name, assignee: taskData.assignee, status: taskData.status as Task['status'] }
-            : t
-        )
+      const next = tasks.map((t) =>
+        t.id === selectedTask.id
+          ? { ...t, name: taskData.name, assignee: taskData.assignee, status: taskData.status as Task['status'] }
+          : t
       );
+      setTasks(next);
+      const updatedProject = { ...project, tasks: next };
+      setProject(updatedProject);
+      updateFullProject(updatedProject);
     } else {
       // Thêm nhiệm vụ mới
       const newTask: Task = {
         id: tasks.length ? Math.max(...tasks.map((t) => t.id)) + 1 : 1,
         name: taskData.name,
         assignee: taskData.assignee,
-        priority: 'Trung Bình',
-        startDate: new Date().toISOString().slice(5).replace('-', ' - '),
-        endDate: '',
-        progress: 'Chưa cập nhật' as Task['progress'],
-  status: taskData.status as Task['status'],
+        priority: "Trung Bình",
+        startDate: new Date().toISOString().slice(5).replace("-", " - "),
+        endDate: "",
+        progress: "Đúng tiến độ",
+        status: taskData.status as Task["status"],
       };
-      setTasks([...tasks, newTask]);
+      const next = [...tasks, newTask];
+      setTasks(next);
+      const updatedProject = { ...project, tasks: next };
+      setProject(updatedProject);
+      // if project not previously stored, add; otherwise update
+      addFullProject(updatedProject);
+      updateFullProject(updatedProject);
     }
     setShowTaskModal(false);
   };
@@ -333,18 +373,27 @@ const ProjectDetail: React.FC = () => {
         <AddMemberModal
           isOpen={showMemberModal}
           onClose={() => setShowMemberModal(false)}
-          existingEmails={teamMembers.map(m => m.email).filter(Boolean) as string[]}
+          existingEmails={teamMembers.map((m) => m.email).filter(Boolean) as string[]}
           onSubmit={(memberData) => {
             const newMember: Member = {
-              id: teamMembers.length ? Math.max(...teamMembers.map(m => m.id)) + 1 : 1,
+              id: teamMembers.length ? Math.max(...teamMembers.map((m) => m.id)) + 1 : 1,
               name: memberData.name,
               role: memberData.role,
-              initials: memberData.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase(),
-              color: '#9ca3af',
+              initials: memberData.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase(),
+              color: "#9ca3af",
               email: memberData.email,
               joinDate: new Date().toLocaleDateString(),
             };
-            setTeamMembers([...teamMembers, newMember]);
+            const nextMembers = [...teamMembers, newMember];
+            setTeamMembers(nextMembers);
+            const updatedProject = { ...project, members: nextMembers };
+            setProject(updatedProject);
+            updateFullProject(updatedProject);
             setShowMemberModal(false);
           }}
         />
@@ -377,7 +426,12 @@ const ProjectDetail: React.FC = () => {
           isOpen={showMembersListModal}
           onClose={() => setShowMembersListModal(false)}
           members={teamMembers}
-          onSave={(updated) => setTeamMembers(updated)}
+          onSave={(updated) => {
+            setTeamMembers(updated);
+            const updatedProject = { ...project, members: updated };
+            setProject(updatedProject);
+            updateFullProject(updatedProject);
+          }}
         />
       )}
     </div>

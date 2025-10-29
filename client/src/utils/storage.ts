@@ -63,3 +63,102 @@ export const getCurrentUser = (): UserRecord | null => {
     return null;
   }
 };
+
+// --- Projects persistence (simple localStorage-backed) ---
+import type { Project } from "../interfaces/Project.interface";
+// full project type (with tasks/members)
+import type { Project as FullProject } from "../interfaces/project";
+
+const PROJECTS_KEY = "projects";
+
+export const getProjects = (): Project[] => {
+  try {
+    const raw = localStorage.getItem(PROJECTS_KEY);
+    return raw ? (JSON.parse(raw) as Project[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const setProjects = (projects: Project[]) => {
+  try {
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  } catch (_e) {
+    void _e;
+  }
+};
+
+export const addProject = (name: string): Project => {
+  const list = getProjects();
+  const id = list.length ? Math.max(...list.map((p) => p.id)) + 1 : 1;
+  const newProject: Project = { id, name };
+  list.push(newProject);
+  setProjects(list);
+  return newProject;
+};
+
+export const updateProject = (id: number, name: string): Project | null => {
+  const list = getProjects();
+  const idx = list.findIndex((p) => p.id === id);
+  if (idx === -1) return null;
+  list[idx] = { ...list[idx], name };
+  setProjects(list);
+  return list[idx];
+};
+
+export const deleteProject = (id: number) => {
+  const list = getProjects();
+  const next = list.filter((p) => p.id !== id);
+  setProjects(next);
+};
+
+// --- Full project persistence (projects with tasks/members) ---
+const FULL_PROJECTS_KEY = "projects_full";
+
+export const getFullProjects = (): FullProject[] => {
+  try {
+    const raw = localStorage.getItem(FULL_PROJECTS_KEY);
+    return raw ? (JSON.parse(raw) as FullProject[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const setFullProjects = (projects: FullProject[]) => {
+  try {
+    localStorage.setItem(FULL_PROJECTS_KEY, JSON.stringify(projects));
+  } catch (_e) {
+    void _e;
+  }
+};
+
+export const getFullProjectById = (id: number): FullProject | null => {
+  const list = getFullProjects();
+  const p = list.find((x) => x.id === id);
+  return p ?? null;
+};
+
+export const addFullProject = (project: FullProject) => {
+  const list = getFullProjects();
+  list.push(project);
+  setFullProjects(list);
+  return project;
+};
+
+export const updateFullProject = (project: FullProject) => {
+  const list = getFullProjects();
+  const idx = list.findIndex((p) => p.id === project.id);
+  if (idx === -1) {
+    list.push(project);
+  } else {
+    list[idx] = project;
+  }
+  setFullProjects(list);
+  return project;
+};
+
+export const deleteFullProject = (id: number) => {
+  const list = getFullProjects();
+  const next = list.filter((p) => p.id !== id);
+  setFullProjects(next);
+};
