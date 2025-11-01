@@ -22,32 +22,72 @@ import "../styles/ProjectDetail.css";
 
 const ProjectDetail: React.FC = () => {
   const params = useParams();
-  const projectId = params.id ? Number(params.id) : mockProject.id;
+  const [projectId] = useState(() => params.id ? Number(params.id) : mockProject.id);
 
   // load full project from storage if available; otherwise fallback to a sensible default
-  // Always fallback to mockProject if no localStorage data
   const [project, setProject] = useState<FullProject>(() => {
     const stored = getFullProjectById(projectId);
-    if (stored && stored.tasks && stored.members) return stored;
-    // fallback: always use mockProject for missing/invalid data
-    return mockProject;
+    if (stored) return stored;
+    
+    // Return a default project structure
+    return {
+      ...mockProject,
+      id: projectId,
+      tasks: initialTasks,
+      members: members,
+    };
   });
 
-  const [tasks, setTasks] = useState<Task[]>(
-    (() => {
-      const stored = window.localStorage.getItem('tasks_mock');
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const stored = getFullProjectById(projectId);
+    return stored?.tasks || initialTasks;
+  });
+
+  const [teamMembers, setTeamMembers] = useState<Member[]>(() => {
+    const stored = getFullProjectById(projectId);
+    return stored?.members || members;
+  });
+
+  // Load project data on mount or when projectId changes
+  useEffect(() => {
+    const loadProject = () => {
+      const stored = getFullProjectById(projectId);
+      
       if (stored) {
+        // Found project in localStorage
+        setProject(stored);
+        setTasks(stored.tasks || initialTasks);
+        setTeamMembers(stored.members || members);
+      } else {
+        // Project not found, create a default one
+        const defaultProject: FullProject = {
+          ...mockProject,
+          id: projectId,
+          name: mockProject.name,
+          description: mockProject.description,
+          thumbnail: mockProject.thumbnail,
+          startDate: mockProject.startDate,
+          endDate: mockProject.endDate,
+          status: mockProject.status,
+          tasks: initialTasks,
+          members: members,
+          ownerId: mockProject.ownerId || 1,
+        };
+        setProject(defaultProject);
+        setTasks(initialTasks);
+        setTeamMembers(members);
+        
+        // Save it to localStorage for future use
         try {
-          const arr = JSON.parse(stored);
-          if (Array.isArray(arr)) return arr;
-        } catch { /* ignore parse error */ }
+          addFullProject(defaultProject);
+        } catch (e) {
+          console.warn("Could not save default project:", e);
+        }
       }
-      return project.tasks && project.tasks.length ? project.tasks : initialTasks;
-    })()
-  );
-  const [teamMembers, setTeamMembers] = useState<Member[]>(
-    project.members && project.members.length ? project.members : members
-  );
+    };
+
+    loadProject();
+  }, [projectId]);
   const [memberSearch, setMemberSearch] = useState("");
   const [memberSort, setMemberSort] = useState<string>("name");
   const [expandedSections, setExpandedSections] = useState<
@@ -110,18 +150,13 @@ const ProjectDetail: React.FC = () => {
       const next = tasks.filter((t) => t.id !== taskToDelete.id);
       setTasks(next);
       // persist
-      const updatedProject = { ...project, tasks: next };
+      const updatedProject: FullProject = { ...project, tasks: next };
       setProject(updatedProject);
       try {
         updateFullProject(updatedProject);
       } catch (_e) {
         void _e;
       }
-      // Also update localStorage directly for reliability
-      window.localStorage.setItem(
-        "projects_full",
-        JSON.stringify([updatedProject])
-      );
       setTaskToDelete(null);
     }
     setShowDeleteModal(false);
@@ -170,17 +205,13 @@ const ProjectDetail: React.FC = () => {
       );
       setTasks(next);
       window.localStorage.setItem('tasks_mock', JSON.stringify(next));
-      const updatedProject = { ...project, tasks: next };
+      const updatedProject: FullProject = { ...project, tasks: next };
       setProject(updatedProject);
       try {
         updateFullProject(updatedProject);
       } catch (_e) {
         void _e;
       }
-      window.localStorage.setItem(
-        "projects_full",
-        JSON.stringify([updatedProject])
-      );
     } else {
       // Thêm nhiệm vụ mới
       const newTask: Task = {
@@ -196,68 +227,16 @@ const ProjectDetail: React.FC = () => {
       const next = [...tasks, newTask];
       setTasks(next);
       window.localStorage.setItem('tasks_mock', JSON.stringify(next));
-      const updatedProject = { ...project, tasks: next };
+      const updatedProject: FullProject = { ...project, tasks: next };
       setProject(updatedProject);
-      try {
-        addFullProject(updatedProject);
-      } catch (_e) {
-        void _e;
-      }
       try {
         updateFullProject(updatedProject);
       } catch (_e) {
         void _e;
       }
-      window.localStorage.setItem(
-        "projects_full",
-        JSON.stringify([updatedProject])
-      );
     }
     setShowTaskModal(false);
   };
-
-  // normalize tasks/members when project changes (prevent crashes from bad data)
-  useEffect(() => {
-    const normalizeTask = (t: unknown): Task => {
-      const obj = (t as Partial<Task & Record<string, unknown>>) || {};
-      const id =
-        typeof obj.id === "number" ? obj.id : Number(String(obj.id ?? "")) || 0;
-      const name = (obj.name as string) ?? "";
-      const assignee = (obj.assignee as string) ?? "";
-      const priority = (obj.priority as Task["priority"]) ?? "Trung Bình";
-      const startDate = (obj.startDate as string) ?? "";
-      const endDate = (obj.endDate as string) ?? "";
-      const progress = (obj.progress as Task["progress"]) ?? "Đúng tiến độ";
-      const status = (obj.status as Task["status"]) ?? "To do";
-      return {
-        id,
-        name,
-        assignee,
-        priority,
-        startDate,
-        endDate,
-        progress,
-        status,
-      };
-    };
-
-    // On project change, reload tasks from localStorage if available
-    const stored = window.localStorage.getItem('tasks_mock');
-    if (stored) {
-      try {
-        const arr = JSON.parse(stored);
-        if (Array.isArray(arr)) {
-          setTasks(arr);
-          return;
-        }
-      } catch { /* ignore parse error */ }
-    }
-    const normTasks = (project.tasks ?? []).map(normalizeTask);
-    setTasks(normTasks.length ? normTasks : []);
-
-    const normMembers = (project.members ?? members) as Member[];
-    setTeamMembers(normMembers);
-  }, [project]);
 
   const handleMemberClick = (member: Member) => {
     setSelectedMember(member);
@@ -518,7 +497,7 @@ const ProjectDetail: React.FC = () => {
             };
             const nextMembers = [...teamMembers, newMember];
             setTeamMembers(nextMembers);
-            const updatedProject = { ...project, members: nextMembers };
+            const updatedProject: FullProject = { ...project, members: nextMembers };
             setProject(updatedProject);
             updateFullProject(updatedProject);
             setShowMemberModal(false);
@@ -555,7 +534,7 @@ const ProjectDetail: React.FC = () => {
           members={teamMembers}
           onSave={(updated) => {
             setTeamMembers(updated);
-            const updatedProject = { ...project, members: updated };
+            const updatedProject: FullProject = { ...project, members: updated };
             setProject(updatedProject);
             updateFullProject(updatedProject);
           }}

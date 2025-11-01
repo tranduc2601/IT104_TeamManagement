@@ -3,6 +3,9 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import './index.css'
 
+// Initialize test data in development
+import './initTestData'
+
 createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <App />

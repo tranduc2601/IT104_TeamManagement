@@ -2,12 +2,21 @@ import Header from "../layouts/Header";
 import Footer from "../layouts/Footer";
 import styles from "../styles/Table.module.css";
 import layoutStyles from "../styles/ProjectList.module.css";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { mockProjects } from "../mock/projects";
-import { getProjects, addProject, updateProject, deleteProject, addFullProject, updateFullProject, deleteFullProject } from "../utils/storage";
-import { members } from "../mock/projectData";
-import type { ProjectBasic } from "../interfaces/project";
+import { 
+  getProjects, 
+  addProject, 
+  updateProject, 
+  deleteProject, 
+  addFullProject, 
+  updateFullProject, 
+  deleteFullProject,
+  getCurrentUser,
+  getFullProjectById
+} from "../utils/storage";
+import { initialFullProjects } from "../mock/initialProjects";
+import type { ProjectBasic, Project } from "../interfaces/project";
 import Pagination from "../components/Pagination";
 import ProjectModal from "../components/ProjectModal";
 import ConfirmDeleteModal from "../components/modals/ConfirmDeleteModal";
@@ -18,12 +27,44 @@ const ProjectList = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [isDeleteOpen, setDeleteOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ProjectBasic | null>(null);
-  // initialize from localStorage (getProjects) and fallback to mockProjects if empty
-  const [projects, setProjects] = useState<ProjectBasic[]>(() => {
-    const stored = getProjects();
-    return stored && stored.length ? stored : mockProjects;
+  const [projects, setProjects] = useState<ProjectBasic[]>([]);
+  const [selectedProject, setSelectedProject] = useState<ProjectBasic | null>(null);
+  
+  // Get current user ONCE - không gọi lại mỗi render
+  const [currentUser] = useState(() => {
+    const user = getCurrentUser();
+    console.log("👤 Current User:", user);
+    return user;
   });
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // Load projects ONCE khi component mount
+  useEffect(() => {
+    console.log("� Loading projects...");
+    
+    // Load stored projects
+    let stored = getProjects();
+    
+    // Khởi tạo dữ liệu mẫu nếu chưa có
+    if (!stored || stored.length === 0) {
+      initialFullProjects.forEach(proj => {
+        addFullProject(proj);
+        addProject(proj.name, proj.ownerId);
+      });
+      
+      stored = getProjects();
+    }
+    
+    // Filter by current user
+    if (currentUser) {
+      const userProjects = stored.filter(p => p.ownerId === currentUser.id);
+      console.log(`✅ Loaded ${userProjects.length} projects for user ${currentUser.id}`);
+      setProjects(userProjects);
+    } else {
+      console.warn("⚠️ No user logged in");
+      setProjects([]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Chỉ chạy 1 lần khi mount - currentUser được capture trong closure
 
   const itemsPerPage = 5;
   const filtered = projects.filter((p) =>
@@ -36,42 +77,87 @@ const ProjectList = () => {
     currentPage * itemsPerPage
   );
 
-  const handleSave = (name: string) => {
+  // Memoize defaultValue để tránh tạo object mới mỗi render
+  const modalDefaultValue = useMemo(() => {
+    if (!editingProject) return { name: "", description: "" };
+    
+    const fullProject = getFullProjectById(editingProject.id);
+    return {
+      name: editingProject.name,
+      description: fullProject?.description || ""
+    };
+  }, [editingProject]);
+
+  // Memoize existingNames
+  const existingNames = useMemo(() => {
+    return projects
+      .filter(p => p.id !== editingProject?.id)
+      .map(p => p.name);
+  }, [projects, editingProject]);
+
+  const handleSave = (name: string, description: string) => {
+    if (!currentUser) {
+      alert("Vui lòng đăng nhập để thực hiện thao tác này");
+      return;
+    }
+
     if (editingProject) {
+      // Update existing project
       const updated = updateProject(editingProject.id, name);
       if (updated) {
         setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-  // also update the full-project entry if exists (keep other fields)
-  updateFullProject({ id: updated.id, name: updated.name, description: "", thumbnail: "", startDate: "", endDate: "", status: "Active", members: members, tasks: [] });
+        
+        // Update full project
+        const existingFull = getFullProjectById(editingProject.id);
+        if (existingFull) {
+          updateFullProject({ 
+            ...existingFull, 
+            name: updated.name,
+            description: description || existingFull.description
+          });
+        }
       }
     } else {
-      const newProject = addProject(name);
+      // Create new project
+      const newProject = addProject(name, currentUser.id);
       setProjects((prev) => [...prev, newProject]);
-      // create a minimal full-project entry so ProjectDetail can load it
-      const full = {
+      
+      // Create full project entry
+      const full: Project = {
         id: newProject.id,
         name: newProject.name,
-        description: "",
+        description: description,
         thumbnail: "",
-        startDate: "",
+        startDate: new Date().toISOString().split('T')[0],
         endDate: "",
         status: "Active" as const,
-        members: members,
+        members: [
+          {
+            id: currentUser.id,
+            name: currentUser.fullName,
+            role: "Project owner",
+            initials: currentUser.fullName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2),
+            color: "#007bff",
+            email: currentUser.email,
+          }
+        ],
         tasks: [],
+        ownerId: currentUser.id,
       };
-  addFullProject(full);
+      addFullProject(full);
     }
+    
     setModalOpen(false);
+    setEditingProject(null);
   };
 
   const handleDelete = () => {
-    if (selectedId !== null) {
-      deleteProject(selectedId);
-      // also remove full project storage
-      // also remove full project storage
-      deleteFullProject(selectedId);
-      setProjects((prev) => prev.filter((p) => p.id !== selectedId));
+    if (selectedProject) {
+      deleteProject(selectedProject.id);
+      deleteFullProject(selectedProject.id);
+      setProjects((prev) => prev.filter((p) => p.id !== selectedProject.id));
       setDeleteOpen(false);
+      setSelectedProject(null);
     }
   };
 
@@ -117,16 +203,37 @@ const ProjectList = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((p) => (
-                  <tr key={p.id}>
-                    <td>{p.id}</td>
-                    <td>{p.name}</td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button
-                          className={`${styles.btn} ${styles.edit}`}
-                          onClick={() => {
-                            setEditingProject(p);
+                {paginated.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
+                      {!currentUser ? (
+                        <>
+                          <p>⚠️ Vui lòng đăng nhập để xem dự án</p>
+                          <Link to="/login" style={{ color: "#0d6efd", textDecoration: "underline" }}>
+                            Đăng nhập ngay
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <p>📋 Chưa có dự án nào</p>
+                          <p style={{ fontSize: "0.875rem" }}>
+                            Click "Thêm Dự Án" để tạo dự án mới
+                          </p>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ) : (
+                  paginated.map((p) => (
+                    <tr key={p.id}>
+                      <td>{p.id}</td>
+                      <td>{p.name}</td>
+                      <td>
+                        <div className={styles.actions}>
+                          <button
+                            className={`${styles.btn} ${styles.edit}`}
+                            onClick={() => {
+                              setEditingProject(p);
                             setModalOpen(true);
                           }}
                         >
@@ -135,7 +242,7 @@ const ProjectList = () => {
                         <button
                           className={`${styles.btn} ${styles.delete}`}
                           onClick={() => {
-                            setSelectedId(p.id);
+                            setSelectedProject(p);
                             setDeleteOpen(true);
                           }}
                         >
@@ -148,9 +255,10 @@ const ProjectList = () => {
                           Chi tiết
                         </Link>
                       </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -167,15 +275,26 @@ const ProjectList = () => {
 
       <ProjectModal
         isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingProject(null);
+        }}
         onSave={handleSave}
-        defaultValue={editingProject?.name}
+        defaultValue={modalDefaultValue}
+        existingNames={existingNames}
+        editingId={editingProject?.id}
       />
 
       <ConfirmDeleteModal
         isOpen={isDeleteOpen}
-        onClose={() => setDeleteOpen(false)}
+        onClose={() => {
+          setDeleteOpen(false);
+          setSelectedProject(null);
+        }}
         onConfirm={handleDelete}
+        title="Xác nhận xóa dự án"
+        message="Bạn có chắc muốn xóa dự án này không? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn."
+        itemName={selectedProject?.name}
       />
     </div>
   );

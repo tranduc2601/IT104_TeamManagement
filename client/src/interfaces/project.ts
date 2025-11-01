@@ -25,6 +25,7 @@ export interface Member {
 export interface ProjectBasic {
   id: number;
   name: string;
+  ownerId: number; // ID của user là project owner
 }
 
 // Full project interface (with tasks/members, used in project detail)
@@ -38,7 +39,16 @@ export interface Project {
   status: "Active" | "Completed" | "On Hold";
   members: Member[];
   tasks: Task[];
+  ownerId: number; // ID của user là project owner
 }
+
+// Validation constants
+export const PROJECT_VALIDATION = {
+  NAME_MIN_LENGTH: 3,
+  NAME_MAX_LENGTH: 100,
+  DESCRIPTION_MIN_LENGTH: 0,
+  DESCRIPTION_MAX_LENGTH: 500,
+} as const;
 
 export type TaskStatus = "To do" | "In Progress" | "Pending" | "Done";
 export type TaskPriority = "Thấp" | "Trung Bình" | "Cao";

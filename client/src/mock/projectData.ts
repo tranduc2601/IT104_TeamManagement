@@ -1,7 +1,6 @@
-// src/mock/projectData.ts
-
 import type { Task, Member, Project } from '../interfaces/project';
 
+// Dữ liệu mẫu cho task
 export const initialTasks: Task[] = [
   { 
     id: 1, 
@@ -116,6 +115,7 @@ export const mockProject: Project = {
   status: 'Active',
   members: members,
   tasks: initialTasks,
+  ownerId: 1, // An Nguyễn is the owner
 };
 
 // Các hàm helper để làm việc với mock data

@@ -1,0 +1,102 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "name": "Dự án Website E-commerce",
+      "description": "Phát triển website bán hàng trực tuyến",
+      "thumbnail": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop",
+      "startDate": "2025-02-01",
+      "endDate": "2025-06-30",
+      "status": "Active",
+      "tasks": [
+        {
+          "id": 1,
+          "name": "Soạn thảo đề cương dự án",
+          "assignee": "An Nguyễn",
+          "priority": "Thấp",
+          "startDate": "02 - 24",
+          "endDate": "02 - 27",
+          "progress": "Đúng tiến độ",
+          "status": "To do"
+        },
+        {
+          "id": 2,
+          "name": "Thiết kế database",
+          "assignee": "An Nguyễn",
+          "priority": "Trung Bình",
+          "startDate": "02 - 24",
+          "endDate": "02 - 27",
+          "progress": "Có rủi ro",
+          "status": "To do"
+        },
+        {
+          "id": 3,
+          "name": "Phân tích yêu cầu hệ thống",
+          "assignee": "An Nguyễn",
+          "priority": "Cao",
+          "startDate": "02 - 24",
+          "endDate": "02 - 27",
+          "progress": "Trễ hạn",
+          "status": "To do"
+        },
+        {
+          "id": 4,
+          "name": "Lên lịch họp kickoff",
+          "assignee": "An Nguyễn",
+          "priority": "Trung Bình",
+          "startDate": "02 - 24",
+          "endDate": "02 - 27",
+          "progress": "Có rủi ro",
+          "status": "In Progress"
+        },
+        {
+          "id": 5,
+          "name": "Thiết kế UI trang đăng nhập",
+          "assignee": "Bách Nguyễn",
+          "priority": "Cao",
+          "startDate": "02 - 25",
+          "endDate": "02 - 28",
+          "progress": "Đúng tiến độ",
+          "status": "In Progress"
+        }
+      ],
+      "members": [
+        {
+          "id": 1,
+          "name": "Trần Minh Đức",
+          "initials": "MD",
+          "color": "#22c55e",
+          "role": "Leader",
+          "email": "duc@example.com",
+          "joinDate": "2024-01-15"
+        },
+        {
+          "id": 2,
+          "name": "An Nguyễn",
+          "initials": "AN",
+          "color": "#3b82f6",
+          "role": "Developer",
+          "email": "an@example.com",
+          "joinDate": "2024-01-20"
+        },
+        {
+          "id": 3,
+          "name": "Bách Nguyễn",
+          "initials": "BN",
+          "color": "#f59e0b",
+          "role": "Designer",
+          "email": "bach@example.com",
+          "joinDate": "2024-02-01"
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "fullName": "Trần Minh Đức",
+      "email": "duc@example.com",
+      "password": "12345678"
+    }
+  ]
+}

@@ -1,8 +1,4 @@
-// Helper for simple client-side storage of users (demo only)
-// In production replace calls here with API calls (axios/fetch) to your backend.
-// Example (pseudo):
-// // import axios from 'axios';
-// export const addUser = async (user) => axios.post('/api/users', user);
+// Helper quản lý localStorage (demo only, production nên dùng API)
 
 export interface UserRecord {
   id: number;
@@ -31,8 +27,6 @@ export const addUser = (user: Omit<UserRecord, 'id'>): UserRecord => {
   try {
     localStorage.setItem(USERS_KEY, JSON.stringify(list));
   } catch (_e) {
-    // best-effort write; ignore failures in demo environment
-    // keep variable referenced for linters
     void _e;
   }
   return newUser;
@@ -48,7 +42,6 @@ export const setCurrentUser = (user: UserRecord | null) => {
     if (user) localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
     else localStorage.removeItem(CURRENT_USER_KEY);
   } catch (_e) {
-    // ignore write errors for demo
     void _e;
   }
 };
@@ -58,13 +51,12 @@ export const getCurrentUser = (): UserRecord | null => {
     const raw = localStorage.getItem(CURRENT_USER_KEY);
     return raw ? (JSON.parse(raw) as UserRecord) : null;
   } catch (_e) {
-    // parse error
     void _e;
     return null;
   }
 };
 
-// --- Projects persistence (simple localStorage-backed) ---
+// Quản lý Projects
 import type { ProjectBasic, Project } from "../interfaces/project";
 
 const PROJECTS_KEY = "projects";
@@ -86,10 +78,10 @@ export const setProjects = (projects: ProjectBasic[]) => {
   }
 };
 
-export const addProject = (name: string): ProjectBasic => {
+export const addProject = (name: string, ownerId: number): ProjectBasic => {
   const list = getProjects();
   const id = list.length ? Math.max(...list.map((p) => p.id)) + 1 : 1;
-  const newProject: ProjectBasic = { id, name };
+  const newProject: ProjectBasic = { id, name, ownerId };
   list.push(newProject);
   setProjects(list);
   return newProject;
@@ -102,6 +94,11 @@ export const updateProject = (id: number, name: string): ProjectBasic | null => 
   list[idx] = { ...list[idx], name };
   setProjects(list);
   return list[idx];
+};
+
+export const getProjectsByOwner = (ownerId: number): ProjectBasic[] => {
+  const list = getProjects();
+  return list.filter((p) => p.ownerId === ownerId);
 };
 
 export const deleteProject = (id: number) => {

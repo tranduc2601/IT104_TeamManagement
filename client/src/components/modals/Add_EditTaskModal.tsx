@@ -22,9 +22,9 @@ const progressOptions = ["Đúng tiến độ", "Có rủi ro", "Trễ hạn"];
 const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose, onSubmit, initialData, existingNames = [] }) => {
   const [form] = Form.useForm();
 
+  // Reset form khi modal mở
   useEffect(() => {
     if (initialData) {
-      // convert possible string dates into dayjs objects for DatePicker
       const parse = (d: unknown): Dayjs | undefined => {
         if (!d) return undefined;
         if (dayjs.isDayjs(d)) return d as Dayjs;
@@ -51,7 +51,6 @@ const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-      // Format dates as 'MM - DD' to match mock data format
       const startDate = values.startDate && dayjs.isDayjs(values.startDate) ? (values.startDate as Dayjs).format('MM - DD') : undefined;
       const endDate = values.endDate && dayjs.isDayjs(values.endDate) ? (values.endDate as Dayjs).format('MM - DD') : undefined;
       onSubmit({
@@ -66,7 +65,6 @@ const AddOrEditTaskModal: React.FC<AddOrEditTaskModalProps> = ({ isOpen, onClose
       onClose();
     } catch (_err) {
       void _err;
-      // validation failed; antd will show messages
     }
   };
 
